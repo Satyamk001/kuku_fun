@@ -10,6 +10,9 @@ import { env } from "./config/env.js";
 const require = createRequire(import.meta.url);
 const helmet = require("helmet");
 
+import http from "node:http";
+import { initIo } from "./realtime/io.js";
+
 const app = express();
 
 app.use((req, _res, next) => {
@@ -39,4 +42,7 @@ app.use("/api", apiRouter);
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-export default app;
+const server = http.createServer(app);
+initIo(server);
+
+export default server;
