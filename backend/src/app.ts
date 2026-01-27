@@ -10,26 +10,24 @@ import { env } from "./config/env.js";
 const require = createRequire(import.meta.url);
 const helmet = require("helmet");
 
-export function createApp() {
-  const app = express();
+const app = express();
 
-  app.use(
-    cors({
-      origin: [env.FRONTEND_URL, "http://localhost:5173"],
-      credentials: true,
-    })
-  );
+app.use(
+  cors({
+    origin: [env.FRONTEND_URL, "http://localhost:5173"],
+    credentials: true,
+  })
+);
 
-  app.use(clerkMiddleware());
+app.use(clerkMiddleware());
 
-  app.use(helmet());
+app.use(helmet());
 
-  app.use(express.json());
+app.use(express.json());
 
-  app.use("/api", apiRouter);
+app.use("/api", apiRouter);
 
-  app.use(notFoundHandler);
-  app.use(errorHandler);
+app.use(notFoundHandler);
+app.use(errorHandler);
 
-  return app;
-}
+export default app;
