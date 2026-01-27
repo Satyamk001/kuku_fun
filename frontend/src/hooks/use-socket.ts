@@ -29,8 +29,8 @@ export function useSocket(): UseSocketResult {
 
       return;
     }
-
-    const baseUrl = "http://localhost:5000";
+    // get from env
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     console.log(`[Socket], ${baseUrl}, ${userId}`);
 
