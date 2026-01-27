@@ -24,7 +24,10 @@ app.use(clerkMiddleware());
 app.use(helmet());
 
 app.use(express.json());
-
+//health check
+app.get("/health", (_req, res) => {
+  res.json({ message: "ok" });
+});
 app.use("/api", apiRouter);
 
 app.use(notFoundHandler);
