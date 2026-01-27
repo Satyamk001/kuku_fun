@@ -1,17 +1,20 @@
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
+import { createRequire } from "module";
 import { notFoundHandler } from "./middleware/notFoundHandler.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { clerkMiddleware } from "./config/clerk.js";
 import { apiRouter } from "./routes/index.js";
+
+const require = createRequire(import.meta.url);
+const helmet = require("helmet");
 
 export function createApp() {
   const app = express();
 
   app.use(clerkMiddleware());
 
-  app.use((helmet as any)());
+  app.use(helmet());
 
   app.use(
     cors({
