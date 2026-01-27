@@ -11,7 +11,7 @@ export function createApp() {
 
   app.use(clerkMiddleware());
 
-  app.use(helmet());
+  app.use((helmet as any)());
 
   app.use(
     cors({

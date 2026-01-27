@@ -162,6 +162,12 @@ export function initIo(httpServer: HttpServer) {
 
       addOnlineUser(localUserId, socket.id);
       broadcasePresence();
+
+      socket.on("disconnect", () => {
+        console.log(`[io disconnect]------> ${socket.id}`);
+        removeOnlineUser(localUserId, socket.id);
+        broadcasePresence();
+      });
     } catch (err) {
       console.log(`[Error while socket connection]------> ${err}`);
       socket.disconnect(true);
