@@ -5,6 +5,7 @@ import { notFoundHandler } from "./middleware/notFoundHandler.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { clerkMiddleware } from "./config/clerk.js";
 import { apiRouter } from "./routes/index.js";
+import { env } from "./config/env.js";
 
 const require = createRequire(import.meta.url);
 const helmet = require("helmet");
@@ -18,7 +19,7 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: [process.env.FRONTEND_URL || "*"],
+      origin: [env.FRONTEND_URL, "http://localhost:5173"],
       credentials: true,
     })
   );
