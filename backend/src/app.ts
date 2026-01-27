@@ -12,6 +12,12 @@ const helmet = require("helmet");
 
 const app = express();
 
+app.use((req, _res, next) => {
+  console.log("Incoming Request Origin:", req.headers.origin);
+  console.log("Expected Frontend URL:", env.FRONTEND_URL);
+  next();
+});
+
 app.use(
   cors({
     origin: [env.FRONTEND_URL, "http://localhost:5173"],

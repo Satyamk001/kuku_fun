@@ -11,7 +11,9 @@ const EnvSchema = z.object({
   CLERK_PUBLISHABLE_KEY: z.string(),
   CLERK_SECRET_KEY: z.string(),
   DB_URL: z.string(),
-  FRONTEND_URL: z.string().transform((url) => url.trim()),
+  FRONTEND_URL: z
+    .string()
+    .transform((url) => url.trim().replace(/\/$/, "")),
 });
 
 const parsed = EnvSchema.safeParse(process.env);
