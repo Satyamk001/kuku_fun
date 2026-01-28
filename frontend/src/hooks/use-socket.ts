@@ -37,7 +37,7 @@ export function useSocket(): UseSocketResult {
     const socketInstance: Socket = io(baseUrl, {
       auth: { userId }, // backend is going to read the userId
       withCredentials: true,
-      transports: ["websocket"],
+      transports: ["polling", "websocket"],
     });
 
     setSocket(socketInstance);
