@@ -31,7 +31,7 @@ export function useSocket(): UseSocketResult {
     }
     // get from env
     // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    const baseUrl = "https://all-backend-render.onrender.com/";
+    const baseUrl = "https://all-backend-render.onrender.com/chat-app";
 
     console.log(`[Socket], ${baseUrl}, ${userId}`);
 

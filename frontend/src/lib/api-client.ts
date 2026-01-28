@@ -9,7 +9,7 @@ export function createBrowserApiClient(
 ): AxiosInstance {
   const client = axios.create({
     // baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000",
-    baseURL: "https://all-backend-render.onrender.com/",
+    baseURL: "https://all-backend-render.onrender.com/chat-app",
     withCredentials: false,
   });
 
