@@ -30,7 +30,8 @@ export function useSocket(): UseSocketResult {
       return;
     }
     // get from env
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    // const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const baseUrl = "https://all-backend-render.onrender.com/";
 
     console.log(`[Socket], ${baseUrl}, ${userId}`);
 
