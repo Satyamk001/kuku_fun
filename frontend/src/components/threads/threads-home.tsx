@@ -122,18 +122,19 @@ function ThreadsHomePage() {
                 <p className="text-sm text-muted-foreground">Loading Categories...</p>
               </div>
             )}
-            {!isLoading && categories.map(cat => (
-              <button
-                key={cat.slug}
-                onClick={() => {
-                  setActiveCategory(cat.slug);
-                  applyFilters(cat.slug, search);
-                }}
-                className="cursor-pointer flex w-full items-center px-3 py-3 text-sm font-medium transition-colors text-muted-foreground hover:bg-card/80 hover:text-foreground"
-              >
-                {cat.name}
-              </button>
-            ))}
+            {!isLoading &&
+              categories.map(cat => (
+                <button
+                  key={cat.slug}
+                  onClick={() => {
+                    setActiveCategory(cat.slug);
+                    applyFilters(cat.slug, search);
+                  }}
+                  className="cursor-pointer flex w-full items-center px-3 py-3 text-sm font-medium transition-colors text-muted-foreground hover:bg-card/80 hover:text-foreground"
+                >
+                  {cat.name}
+                </button>
+              ))}
           </CardContent>
         </Card>
       </aside>
@@ -158,7 +159,7 @@ function ThreadsHomePage() {
                         applyFilters(activeCategory, search);
                       }
                       if (e.key === 'Backspace') {
-                        if(search.length == 1){
+                        if (search.length == 1) {
                           applyFilters(activeCategory, '');
                         }
                       }
@@ -167,7 +168,10 @@ function ThreadsHomePage() {
                 </div>
                 <Button
                   onClick={() => applyFilters(activeCategory, search)}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90">Search</Button>
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  Search
+                </Button>
               </div>
             </div>
 
@@ -182,7 +186,6 @@ function ThreadsHomePage() {
 
         <div className="space-y-4">
           {isLoading && <ThreadListSkeleton count={5} />}
-
 
           {!isLoading && threads.length === 0 && (
             <Card className="border-dashed border-border bg-card">

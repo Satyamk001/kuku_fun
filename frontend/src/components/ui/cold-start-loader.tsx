@@ -103,9 +103,7 @@ export function ColdStartLoader({ onComplete, isLoading }: ColdStartLoaderProps)
         </div>
 
         {/* Percentage Display */}
-        <p className="mt-3 text-center text-xs text-muted-foreground tabular-nums">
-          {Math.round(progress)}%
-        </p>
+        <p className="mt-3 text-center text-xs text-muted-foreground tabular-nums">{Math.round(progress)}%</p>
 
         {/* Helpful Tip */}
         {progress < 95 && (
