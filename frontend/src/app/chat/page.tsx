@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import DirectChatPanel from "@/components/chat/direct-chat-panel";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useSocket } from "@/hooks/use-socket";
-import { apiGet, createBrowserApiClient } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
-import { ChatUser } from "@/types/chat";
-import { useAuth } from "@clerk/nextjs";
-import { MessageSquare, Users } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import DirectChatPanel from '@/components/chat/direct-chat-panel';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useSocket } from '@/hooks/use-socket';
+import { apiGet, createBrowserApiClient } from '@/lib/api-client';
+import { cn } from '@/lib/utils';
+import { ChatUser } from '@/types/chat';
+import { useAuth } from '@clerk/nextjs';
+import { MessageSquare, Users } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 function Chat() {
   const { getToken } = useAuth();
@@ -28,14 +28,14 @@ function Chat() {
       setLoadingUsers(true);
 
       try {
-        const res = await apiGet<ChatUser[]>(apiClient, "/api/chat/users");
+        const res = await apiGet<ChatUser[]>(apiClient, '/api/chat/users');
 
         if (!isMounted) return;
-        const finalRes = res.map((row) => ({
+        const finalRes = res.map(row => ({
           id: Number(row.id),
           displayName: row.displayName ?? null,
           handle: row.handle ?? null,
-          avatarUrl: row.avatarUrl ?? null,
+          avatarUrl: row.avatarUrl ?? null
         }));
         setUsers(finalRes);
 
@@ -63,21 +63,18 @@ function Chat() {
       setOnlineUserIds(list);
     }
 
-    socket.on("presence:update", handlePresense);
+    socket.on('presence:update', handlePresense);
 
     return () => {
-      socket.off("presence:update", handlePresense);
+      socket.off('presence:update', handlePresense);
     };
   }, [socket]);
 
-  const activeUser =
-    activeUserId !== null
-      ? users.find((u) => u.id === activeUserId) ?? null
-      : null;
+  const activeUser = activeUserId !== null ? (users.find(u => u.id === activeUserId) ?? null) : null;
 
-  const onlineCount = users.filter((u) => onlineUserIds.includes(u.id)).length;
+  const onlineCount = users.filter(u => onlineUserIds.includes(u.id)).length;
 
-  console.log(onlineCount, "usersCount");
+  console.log(onlineCount, 'usersCount');
 
   return (
     <div className="max-auto max-w-6xl flex w-full flex-col gap-4 py-6 md:flex-row md:gap-6">
@@ -86,28 +83,21 @@ function Chat() {
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-primary" />
-              <CardTitle className="text-sm text-foreground">
-                Direct Messages
-              </CardTitle>
+              <CardTitle className="text-sm text-foreground">Direct Messages</CardTitle>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               {onlineCount} Online - {users.length} total
             </p>
           </CardHeader>
           <CardContent className="flex max-h-[calc(100vh-12rem)] flex-col gap-1 overflow-y-auto">
-            {loadingUsers && (
-              <p className="text-muted-foreground">Loading users...</p>
-            )}
+            {loadingUsers && <p className="text-muted-foreground">Loading users...</p>}
 
             {!loadingUsers &&
-              users.map((user) => {
+              users.map(user => {
                 const isOnline = onlineUserIds.includes(user.id);
                 const isActive = activeUserId === user.id;
 
-                const label =
-                  user.handle && user.handle !== ""
-                    ? `@${user.handle}`
-                    : user.displayName ?? "User";
+                const label = user.handle && user.handle !== '' ? `@${user.handle}` : (user.displayName ?? 'User');
 
                 return (
                   <button
@@ -115,28 +105,19 @@ function Chat() {
                     type="button"
                     onClick={() => setActiveUserId(user.id)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-xs transition-colors duration-150",
+                      'flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left text-xs transition-colors duration-150',
                       isActive
-                        ? "bg-primary/20 text-primary ring-1 ring-primary/30"
-                        : "text-muted-foreground hover:bg-card/90"
+                        ? 'bg-primary/20 text-primary ring-1 ring-primary/30'
+                        : 'text-muted-foreground hover:bg-card/90'
                     )}
                   >
                     <Avatar className="h-8 w-8">
-                      {user.avatarUrl && (
-                        <AvatarImage src={user.avatarUrl} alt={label} />
-                      )}
+                      {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={label} />}
                     </Avatar>
                     <div className="min-w-0 flex flex-1 flex-col">
-                      <span className="truncate text-[12px] font-medium text-foreground">
-                        {label}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-[12px]",
-                          isOnline ? "text-primary" : "text-muted-foreground"
-                        )}
-                      >
-                        {isOnline ? "Online" : "Offline"}
+                      <span className="truncate text-[12px] font-medium text-foreground">{label}</span>
+                      <span className={cn('text-[12px]', isOnline ? 'text-primary' : 'text-muted-foreground')}>
+                        {isOnline ? 'Online' : 'Offline'}
                       </span>
                     </div>
                   </button>
@@ -148,19 +129,12 @@ function Chat() {
 
       <main className="min-h-[calc(100vh-8rem)] flex-1 md:min-h-auto">
         {activeUserId && activeUser ? (
-          <DirectChatPanel
-            otherUserId={activeUserId}
-            otherUser={activeUser}
-            socket={socket}
-            connected={connected}
-          />
+          <DirectChatPanel otherUserId={activeUserId} otherUser={activeUser} socket={socket} connected={connected} />
         ) : (
           <Card className="flex h-full items-center justify-center border-border/70 bg-card">
             <CardContent className="text-center">
               <Users className="mx-auto mb-3 w-12 h-12 opacity-55 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Select a user to start chatting...
-              </p>
+              <p className="text-sm text-muted-foreground">Select a user to start chatting...</p>
             </CardContent>
           </Card>
         )}

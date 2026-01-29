@@ -38,23 +38,19 @@ export function mapDirectMessage(r: RawDirectMessage): DirectMessage {
     sender: {
       displayName: r.sender?.displayName ?? r.sender_display_name ?? null,
       handle: r.sender?.handle ?? r.sender_handle ?? null,
-      avatarUrl: r.sender?.avatarUrl ?? r.sender_avatar ?? null,
+      avatarUrl: r.sender?.avatarUrl ?? r.sender_avatar ?? null
     },
 
     recipient: {
       displayName: r.recipient?.displayName ?? r.recipient_display_name ?? null,
       handle: r.recipient?.handle ?? r.recipient_handle ?? null,
-      avatarUrl: r.recipient?.avatarUrl ?? r.recipient_avatar ?? null,
-    },
+      avatarUrl: r.recipient?.avatarUrl ?? r.recipient_avatar ?? null
+    }
   };
 }
 
 export function mapDirectMessagesResponse(res: unknown): DirectMessage[] {
-  const rawList = Array.isArray(res)
-    ? res
-    : Array.isArray((res as any)?.data)
-    ? (res as any).data
-    : [];
+  const rawList = Array.isArray(res) ? res : Array.isArray((res as any)?.data) ? (res as any).data : [];
 
   return (rawList as RawDirectMessage[]).map(mapDirectMessage);
 }

@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { SignedIn, SignedOut, useAuth, UserButton } from "@clerk/nextjs";
-import Link from "next/link";
-import { Button } from "../ui/button";
-import { Bell, Menu, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useSocket } from "@/hooks/use-socket";
-import { apiGet, createBrowserApiClient } from "@/lib/api-client";
-import { Notification } from "@/types/notification";
-import { useNotificationCount } from "@/hooks/use-notification-count";
-import { toast } from "sonner";
+import { SignedIn, SignedOut, useAuth, UserButton } from '@clerk/nextjs';
+import Link from 'next/link';
+import { Button } from '../ui/button';
+import { Bell, Menu, X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSocket } from '@/hooks/use-socket';
+import { apiGet, createBrowserApiClient } from '@/lib/api-client';
+import { Notification } from '@/types/notification';
+import { useNotificationCount } from '@/hooks/use-notification-count';
+import { toast } from 'sonner';
 
 function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -17,13 +17,12 @@ function Navbar() {
   const { getToken, userId } = useAuth();
   const { socket } = useSocket();
 
-  const { unreadCount, setUnreadCount, incrementUnread } =
-    useNotificationCount();
+  const { unreadCount, setUnreadCount, incrementUnread } = useNotificationCount();
 
   const apiClient = useMemo(() => createBrowserApiClient(getToken), [getToken]);
 
   useEffect(() => {
-    let isMounted = true;
+    const isMounted = true;
 
     async function loadUnreadNotifications() {
       if (!userId) {
@@ -32,10 +31,7 @@ function Navbar() {
       }
 
       try {
-        const data = await apiGet<Notification[]>(
-          apiClient,
-          "/api/notifications?unreadOnly=true"
-        );
+        const data = await apiGet<Notification[]>(apiClient, '/api/notifications?unreadOnly=true');
 
         if (!isMounted) return;
         console.log(data);
@@ -58,32 +54,32 @@ function Navbar() {
     const handleNewNotification = (payload: Notification) => {
       incrementUnread();
 
-      toast("New Notification", {
+      toast('New Notification', {
         description:
-          payload.type === "REPLY_ON_THREAD"
-            ? `${payload.actor.handle ?? "Someone"} commented to your thread`
-            : `${payload.actor.handle ?? "Someone"} liked your thread`,
+          payload.type === 'REPLY_ON_THREAD'
+            ? `${payload.actor.handle ?? 'Someone'} commented to your thread`
+            : `${payload.actor.handle ?? 'Someone'} liked your thread`
       });
     };
 
-    socket.on("notification:new", handleNewNotification);
+    socket.on('notification:new', handleNewNotification);
 
     return () => {
-      socket.off("notification:new", handleNewNotification);
+      socket.off('notification:new', handleNewNotification);
     };
   }, [socket, incrementUnread]);
 
   const navItems = [
     {
-      href: "/chat",
-      label: "Chat",
-      match: (p?: string | null) => p?.startsWith("chat"),
+      href: '/chat',
+      label: 'Chat',
+      match: (p?: string | null) => p?.startsWith('chat')
     },
     {
-      href: "/profile",
-      label: "Profile",
-      match: (p?: string | null) => p?.startsWith("profile"),
-    },
+      href: '/profile',
+      label: 'Profile',
+      match: (p?: string | null) => p?.startsWith('profile')
+    }
   ];
 
   const renderNavLinks = (item: (typeof navItems)[number]) => {
@@ -102,18 +98,11 @@ function Navbar() {
     <header className="sticky top-0 z-40 border-b border-sidebar-border bg-sidebar/95 backdrop-blur-sm">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="flex items-center gap-2 font-bold text-lg text-sidebar-foreground"
-          >
-            <span className="bg-linear-to-r from-primary to-chart-2 bg-clip-text text-transparent">
-              KuKu
-            </span>
+          <Link href="/" className="flex items-center gap-2 font-bold text-lg text-sidebar-foreground">
+            <span className="bg-linear-to-r from-primary to-chart-2 bg-clip-text text-transparent">KuKu</span>
             <span className="text-foreground/90">Fun</span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
-            {navItems.map(renderNavLinks)}
-          </nav>
+          <nav className="hidden items-center gap-1 md:flex">{navItems.map(renderNavLinks)}</nav>
         </div>
 
         <div className="flex items-center gap-2 md:gap-4">
@@ -145,22 +134,16 @@ function Navbar() {
 
           <button
             type="button"
-            onClick={() => setMobileMenuOpen((open) => !open)}
+            onClick={() => setMobileMenuOpen(open => !open)}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-accent text-muted-foreground transition-colors md:hidden"
           >
-            {mobileMenuOpen ? (
-              <X className="w-4 h-4" />
-            ) : (
-              <Menu className="w-4 h-4" />
-            )}
+            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
         </div>
       </div>
       {mobileMenuOpen && (
         <div className="border-t border-sidebar-border bg-sidebar/90 md:hidden">
-          <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 pb-4 pt-2">
-            {navItems.map(renderNavLinks)}
-          </nav>
+          <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 pb-4 pt-2">{navItems.map(renderNavLinks)}</nav>
         </div>
       )}
     </header>

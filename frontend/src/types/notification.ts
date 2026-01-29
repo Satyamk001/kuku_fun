@@ -1,4 +1,4 @@
-export type NotificationType = "REPLY_ON_THREAD" | "LIKE_ON_THREAD";
+export type NotificationType = 'REPLY_ON_THREAD' | 'LIKE_ON_THREAD';
 
 export type Notification = {
   id: number;

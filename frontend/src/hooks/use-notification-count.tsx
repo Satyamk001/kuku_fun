@@ -1,15 +1,6 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  Dispatch,
-  ReactNode,
-  SetStateAction,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, Dispatch, ReactNode, SetStateAction, useCallback, useContext, useMemo, useState } from 'react';
 
 type NotificationCountContextValue = {
   unreadCount: number;
@@ -18,24 +9,19 @@ type NotificationCountContextValue = {
   decrementUnread: (val?: number) => void;
 };
 
-const NotificationCountContext =
-  createContext<NotificationCountContextValue | null>(null);
+const NotificationCountContext = createContext<NotificationCountContextValue | null>(null);
 
-export function NotificationCountProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function NotificationCountProvider({ children }: { children: ReactNode }) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const incrementUnread = useCallback((val: number = 1) => {
     if (val <= 0) return;
-    setUnreadCount((prev) => prev + val);
+    setUnreadCount(prev => prev + val);
   }, []);
 
   const decrementUnread = useCallback((val: number = 1) => {
     if (val <= 0) return;
-    setUnreadCount((prev) => Math.max(0, prev - val));
+    setUnreadCount(prev => Math.max(0, prev - val));
   }, []);
 
   const value = useMemo(
@@ -43,23 +29,19 @@ export function NotificationCountProvider({
       unreadCount,
       setUnreadCount,
       incrementUnread,
-      decrementUnread,
+      decrementUnread
     }),
     [unreadCount]
   );
 
-  return (
-    <NotificationCountContext.Provider value={value}>
-      {children}
-    </NotificationCountContext.Provider>
-  );
+  return <NotificationCountContext.Provider value={value}>{children}</NotificationCountContext.Provider>;
 }
 
 export function useNotificationCount() {
   const ctx = useContext(NotificationCountContext);
 
   if (!ctx) {
-    throw new Error("Context error occured");
+    throw new Error('Context error occured');
   }
 
   return ctx;

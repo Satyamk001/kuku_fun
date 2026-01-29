@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useAuth } from "@clerk/nextjs";
-import { useEffect, useState } from "react";
-import { io, type Socket } from "socket.io-client";
+import { useAuth } from '@clerk/nextjs';
+import { useEffect, useState } from 'react';
+import { io, type Socket } from 'socket.io-client';
 
 type UseSocketResult = {
   socket: Socket | null;
@@ -19,7 +19,7 @@ export function useSocket(): UseSocketResult {
 
     if (!userId) {
       setConnected(false);
-      setSocket((prev) => {
+      setSocket(prev => {
         if (prev) {
           prev.disconnect();
         }
@@ -37,7 +37,7 @@ export function useSocket(): UseSocketResult {
     const socketInstance: Socket = io(baseUrl, {
       auth: { userId }, // backend is going to read the userId
       withCredentials: true,
-      transports: ["websocket"],
+      transports: ['websocket']
     });
 
     setSocket(socketInstance);
@@ -57,14 +57,14 @@ export function useSocket(): UseSocketResult {
       console.error(err);
     };
 
-    socketInstance.on("connect", handleConnect);
-    socketInstance.on("disconnect", handleDisConnect);
-    socketInstance.on("connect_error", handleConnectError);
+    socketInstance.on('connect', handleConnect);
+    socketInstance.on('disconnect', handleDisConnect);
+    socketInstance.on('connect_error', handleConnectError);
 
     return () => {
-      socketInstance.off("connect", handleConnect);
-      socketInstance.off("disconnect", handleDisConnect);
-      socketInstance.off("connect_error", handleConnectError);
+      socketInstance.off('connect', handleConnect);
+      socketInstance.off('disconnect', handleDisConnect);
+      socketInstance.off('connect_error', handleConnectError);
       socketInstance.disconnect();
       setConnected(false);
       setSocket(null);

@@ -1,18 +1,12 @@
-import axios, {
-  type AxiosRequestConfig,
-  type AxiosError,
-  type AxiosInstance,
-} from "axios";
+import axios, { type AxiosRequestConfig, type AxiosError, type AxiosInstance } from 'axios';
 
-export function createBrowserApiClient(
-  getToken: () => Promise<string | null>
-): AxiosInstance {
+export function createBrowserApiClient(getToken: () => Promise<string | null>): AxiosInstance {
   const client = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000",
-    withCredentials: false,
+    baseURL: process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000',
+    withCredentials: false
   });
 
-  client.interceptors.request.use(async (config) => {
+  client.interceptors.request.use(async config => {
     const token = await getToken();
 
     if (token) {
@@ -24,7 +18,7 @@ export function createBrowserApiClient(
   });
 
   client.interceptors.response.use(
-    (response) => response,
+    response => response,
     (error: AxiosError) => {
       return Promise.reject(error);
     }
@@ -33,11 +27,7 @@ export function createBrowserApiClient(
   return client;
 }
 
-export async function apiGet<T>(
-  client: AxiosInstance,
-  url: string,
-  config?: AxiosRequestConfig
-): Promise<T> {
+export async function apiGet<T>(client: AxiosInstance, url: string, config?: AxiosRequestConfig): Promise<T> {
   const response = await client.get<{ data: T }>(url, config);
 
   return response.data.data;

@@ -1,36 +1,30 @@
-"use client";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { apiGet, apiPatch, createBrowserApiClient } from "@/lib/api-client";
-import { cn } from "@/lib/utils";
-import { SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Save, User } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { z } from "zod";
+'use client';
+import { Avatar, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { apiGet, apiPatch, createBrowserApiClient } from '@/lib/api-client';
+import { cn } from '@/lib/utils';
+import { SignedIn, SignedOut, useAuth } from '@clerk/nextjs';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Save, User } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { z } from 'zod';
 
 const optionalText = z
   .string()
-  .transform((value) => value.trim())
-  .transform((value) => (value === "" ? undefined : value))
+  .transform(value => value.trim())
+  .transform(value => (value === '' ? undefined : value))
   .optional();
 
 const ProfileSchema = z.object({
   displayName: optionalText,
   handle: optionalText,
   bio: optionalText,
-  avatarUrl: optionalText,
+  avatarUrl: optionalText
 });
 
 type ProfileFormValues = z.infer<typeof ProfileSchema>;
@@ -56,11 +50,11 @@ function ProfilePage() {
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(ProfileSchema),
     defaultValues: {
-      displayName: "",
-      handle: "",
-      bio: "",
-      avatarUrl: "",
-    },
+      displayName: '',
+      handle: '',
+      bio: '',
+      avatarUrl: ''
+    }
   });
 
   async function onSubmit(values: ProfileFormValues) {
@@ -74,21 +68,17 @@ function ProfilePage() {
       if (values.bio) payload.bio = values.bio;
       if (values.avatarUrl) payload.avatarUrl = values.avatarUrl;
 
-      const apiResponse = await apiPatch<typeof payload, UserResponse>(
-        apiClient,
-        "/api/me",
-        payload
-      );
+      const apiResponse = await apiPatch<typeof payload, UserResponse>(apiClient, '/api/me', payload);
 
       form.reset({
-        displayName: apiResponse.displayName ?? "",
-        handle: apiResponse.handle ?? "",
-        bio: apiResponse.bio ?? "",
-        avatarUrl: apiResponse.avatarUrl ?? "",
+        displayName: apiResponse.displayName ?? '',
+        handle: apiResponse.handle ?? '',
+        bio: apiResponse.bio ?? '',
+        avatarUrl: apiResponse.avatarUrl ?? ''
       });
 
-      toast.success("profile updated successfully", {
-        description: "Your changes have been saved successfully!",
+      toast.success('profile updated successfully', {
+        description: 'Your changes have been saved successfully!'
       });
     } catch (e) {
       console.log(e);
@@ -98,25 +88,25 @@ function ProfilePage() {
   }
 
   useEffect(() => {
-    let isMounted = true;
+    const isMounted = true;
 
     async function loadProfile() {
       try {
         setIsLoading(true);
 
-        const getUserInfo = await apiGet<UserResponse>(apiClient, "/api/me");
+        const getUserInfo = await apiGet<UserResponse>(apiClient, '/api/me');
 
         if (!isMounted) {
           return;
         }
 
-        console.log(getUserInfo, "getUserInfo");
+        console.log(getUserInfo, 'getUserInfo');
 
         form.reset({
-          displayName: getUserInfo.displayName ?? "",
-          handle: getUserInfo.handle ?? "",
-          bio: getUserInfo.bio ?? "",
-          avatarUrl: getUserInfo.avatarUrl ?? "",
+          displayName: getUserInfo.displayName ?? '',
+          handle: getUserInfo.handle ?? '',
+          bio: getUserInfo.bio ?? '',
+          avatarUrl: getUserInfo.avatarUrl ?? ''
         });
       } catch (err: any) {
         console.log(err);
@@ -130,9 +120,9 @@ function ProfilePage() {
     loadProfile();
   }, [apiClient, form]);
 
-  const displayNameValue = form.watch("displayName");
-  const handleValue = form.watch("handle");
-  const avatarUrlValue = form.watch("avatarUrl");
+  const displayNameValue = form.watch('displayName');
+  const handleValue = form.watch('handle');
+  const avatarUrlValue = form.watch('avatarUrl');
 
   return (
     <>
@@ -144,9 +134,7 @@ function ProfilePage() {
               <User className="w-8 h-8 text-primary" />
               Profile Settings
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Manage your profile information
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">Manage your profile information</p>
           </div>
 
           <Card className="border-border/70 bg-card">
@@ -154,27 +142,20 @@ function ProfilePage() {
               <div className="flex items-start gap-6">
                 <Avatar className="h-20 w-20">
                   {avatarUrlValue && (
-                    <AvatarImage
-                      src={avatarUrlValue || "/placeholder.xyz"}
-                      alt={displayNameValue ?? ""}
-                    />
+                    <AvatarImage src={avatarUrlValue || '/placeholder.xyz'} alt={displayNameValue ?? ''} />
                   )}
                 </Avatar>
 
                 <div className="flex-1">
-                  <CardTitle className="text-2xl text-foreground">
-                    {displayNameValue || "Your display name"}
-                  </CardTitle>
+                  <CardTitle className="text-2xl text-foreground">{displayNameValue || 'Your display name'}</CardTitle>
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     <span
                       className={cn(
-                        "rounded-full px-3 py-1 text-xs font-medium",
-                        handleValue
-                          ? "bg-primary/10 text-primary"
-                          : "bg-accent text-accent-foreground"
+                        'rounded-full px-3 py-1 text-xs font-medium',
+                        handleValue ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground'
                       )}
                     >
-                      {handleValue ? `@${handleValue}` : "@handle"}
+                      {handleValue ? `@${handleValue}` : '@handle'}
                     </span>
                   </div>
                 </div>
@@ -184,27 +165,19 @@ function ProfilePage() {
 
           <Card className="border-border/70 bg-card">
             <CardHeader>
-              <CardTitle className="text-lg text-foreground">
-                Edit Profile
-              </CardTitle>
+              <CardTitle className="text-lg text-foreground">Edit Profile</CardTitle>
             </CardHeader>
             <CardContent>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
-                    <label
-                      htmlFor="displayName"
-                      className="text-sm font-semibold text-foreground"
-                    >
+                    <label htmlFor="displayName" className="text-sm font-semibold text-foreground">
                       Display Name
                     </label>
                     <Input
                       id="displayName"
                       placeholder="username"
-                      {...form.register("displayName")}
+                      {...form.register('displayName')}
                       disabled={isLoading || isSaving}
                       className="border-border mt-2 bg-background/60 text-sm"
                     />
@@ -213,16 +186,13 @@ function ProfilePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label
-                      htmlFor="handle"
-                      className="text-sm font-semibold text-foreground"
-                    >
+                    <label htmlFor="handle" className="text-sm font-semibold text-foreground">
                       Handle
                     </label>
                     <Input
                       id="handle"
                       placeholder="@username"
-                      {...form.register("handle")}
+                      {...form.register('handle')}
                       disabled={isLoading || isSaving}
                       className="border-border mt-2 bg-background/60 text-sm"
                     />
@@ -231,17 +201,14 @@ function ProfilePage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label
-                      htmlFor="bio"
-                      className="text-sm font-semibold text-foreground"
-                    >
+                    <label htmlFor="bio" className="text-sm font-semibold text-foreground">
                       Bio
                     </label>
                     <Textarea
                       id="bio"
                       placeholder="Tell about yourself!!!"
                       rows={4}
-                      {...form.register("bio")}
+                      {...form.register('bio')}
                       disabled={isLoading || isSaving}
                       className="border-border mt-2 bg-background/60 text-sm"
                     />
@@ -250,16 +217,13 @@ function ProfilePage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label
-                    htmlFor="avatarUrl"
-                    className="text-sm font-semibold text-foreground"
-                  >
+                  <label htmlFor="avatarUrl" className="text-sm font-semibold text-foreground">
                     Avatar URL
                   </label>
                   <Input
                     id="avatarUrl"
                     placeholder="http://abc.com"
-                    {...form.register("avatarUrl")}
+                    {...form.register('avatarUrl')}
                     disabled={isLoading || isSaving}
                     className="border-border mt-2 bg-background/60 text-sm"
                   />
@@ -274,7 +238,7 @@ function ProfilePage() {
                     className="min-w-[150px] bg-primary text-primary-foreground hover:bg-primary/90"
                   >
                     <Save className="mr-2 w-4 h-4" />
-                    {isSaving ? "Saving..." : "Save Changes"}
+                    {isSaving ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </CardFooter>
               </form>

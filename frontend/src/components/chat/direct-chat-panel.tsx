@@ -1,29 +1,16 @@
-"use client";
+'use client';
 
-import { apiGet, createBrowserApiClient } from "@/lib/api-client";
-import {
-  ChatUser,
-  DirectMessage,
-  mapDirectMessage,
-  mapDirectMessagesResponse,
-  RawDirectMessage,
-} from "@/types/chat";
-import { useAuth } from "@clerk/nextjs";
-import {
-  ChangeEvent,
-  KeyboardEvent,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { type Socket } from "socket.io-client";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { Send, Wifi, WifiOff } from "lucide-react";
-import { Textarea } from "../ui/textarea";
-import { Button } from "../ui/button";
-import { toast } from "sonner";
-import ImageUploadButton from "./image-upload-button";
+import { apiGet, createBrowserApiClient } from '@/lib/api-client';
+import { ChatUser, DirectMessage, mapDirectMessage, mapDirectMessagesResponse, RawDirectMessage } from '@/types/chat';
+import { useAuth } from '@clerk/nextjs';
+import { ChangeEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { type Socket } from 'socket.io-client';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Send, Wifi, WifiOff } from 'lucide-react';
+import { Textarea } from '../ui/textarea';
+import { Button } from '../ui/button';
+import { toast } from 'sonner';
+import ImageUploadButton from './image-upload-button';
 
 type DirectChatPanelProps = {
   otherUserId: number;
@@ -40,7 +27,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
 
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const [typingLabel, setTypingLabel] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -49,7 +36,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    messagesEndRef?.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   useEffect(() => {
@@ -59,15 +46,11 @@ function DirectChatPanel(props: DirectChatPanelProps) {
       setIsLoading(true);
 
       try {
-        const res = await apiGet<DirectMessage[]>(
-          apiClient,
-          `/api/chat/conversations/${otherUserId}/messages`,
-          {
-            params: {
-              limit: 100,
-            },
+        const res = await apiGet<DirectMessage[]>(apiClient, `/api/chat/conversations/${otherUserId}/messages`, {
+          params: {
+            limit: 100
           }
-        );
+        });
 
         if (!isMounted) return;
         setMessages(mapDirectMessagesResponse(res));
@@ -93,38 +76,31 @@ function DirectChatPanel(props: DirectChatPanelProps) {
     function handleMessage(payload: RawDirectMessage) {
       const mapped = mapDirectMessage(payload);
 
-      if (
-        mapped.senderUserId !== otherUserId &&
-        mapped.recipientUserId !== otherUserId
-      ) {
+      if (mapped.senderUserId !== otherUserId && mapped.recipientUserId !== otherUserId) {
         return;
       }
 
-      setMessages((prev) => [...prev, mapped]);
+      setMessages(prev => [...prev, mapped]);
     }
 
-    function handleTyping(payload: {
-      senderUserId?: number;
-      receipientUserId?: number;
-      isTyping?: boolean;
-    }) {
+    function handleTyping(payload: { senderUserId?: number; receipientUserId?: number; isTyping?: boolean }) {
       const senderId = Number(payload.senderUserId);
 
       if (senderId !== otherUserId) return;
 
       if (payload.isTyping) {
-        setTypingLabel("Typing...");
+        setTypingLabel('Typing...');
       } else {
         setTypingLabel(null);
       }
     }
 
-    socket.on("dm:message", handleMessage);
-    socket.on("dm:typing", handleTyping);
+    socket.on('dm:message', handleMessage);
+    socket.on('dm:typing', handleTyping);
 
     return () => {
-      socket.off("dm:message", handleMessage);
-      socket.off("dm:typing", handleTyping);
+      socket.off('dm:message', handleMessage);
+      socket.off('dm:typing', handleTyping);
     };
   }, [socket, otherUserId]);
 
@@ -133,7 +109,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
       return;
     }
 
-    socket.emit("dm:typing", { recipientUserId: otherUserId, isTyping });
+    socket.emit('dm:typing', { recipientUserId: otherUserId, isTyping });
   }
 
   function handleInputChange(event: ChangeEvent<HTMLTextAreaElement>) {
@@ -156,7 +132,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       void handleSend();
     }
@@ -164,8 +140,8 @@ function DirectChatPanel(props: DirectChatPanelProps) {
 
   async function handleSend() {
     if (!socket || !connected) {
-      toast("Not connected", {
-        description: "Realtime connection is not established yet!",
+      toast('Not connected', {
+        description: 'Realtime connection is not established yet!'
       });
 
       return;
@@ -178,14 +154,14 @@ function DirectChatPanel(props: DirectChatPanelProps) {
     setSending(true);
 
     try {
-      socket.emit("dm:send", {
+      socket.emit('dm:send', {
         recipientUserId: otherUserId,
         body: body || null,
-        imageUrl: imageUrl || null,
+        imageUrl: imageUrl || null
       });
 
-      setInput("");
-      setImageUrl("");
+      setInput('');
+      setImageUrl('');
       setSendTyping(false);
     } finally {
       setSending(false);
@@ -193,25 +169,21 @@ function DirectChatPanel(props: DirectChatPanelProps) {
   }
 
   const title =
-    otherUser?.handle && otherUser?.handle !== ""
+    otherUser?.handle && otherUser?.handle !== ''
       ? `@${otherUser?.handle}`
-      : otherUser?.displayName ?? "Conversation";
+      : (otherUser?.displayName ?? 'Conversation');
 
   return (
     <Card className="flex h-full flex-col overflow-hidden border-border/70 bg-card">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border pb-3">
         <div>
           <CardTitle className="text-base text-foreground">{title}</CardTitle>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Direct message conversation
-          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">Direct message conversation</p>
         </div>
         <div className="flex items-center gap-2">
           <span
             className={`flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium ${
-              connected
-                ? "bg-primary/10 text-primary"
-                : "bg-accent text-accent-foreground"
+              connected ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground'
             }`}
           >
             {connected ? (
@@ -237,37 +209,28 @@ function DirectChatPanel(props: DirectChatPanelProps) {
         )}
         {!isLoading && messages.length === 0 && (
           <div className="flex items-center justify-center py-12">
-            <p className="text-xs text-muted-foreground">
-              No messages yet. Start the first initiative
-            </p>
+            <p className="text-xs text-muted-foreground">No messages yet. Start the first initiative</p>
           </div>
         )}
 
         {!isLoading &&
-          messages.map((msg) => {
-            console.log(msg.senderUserId, otherUserId, "otherUserId");
+          messages.map(msg => {
+            console.log(msg.senderUserId, otherUserId, 'otherUserId');
 
             const isOther = msg.senderUserId === otherUserId;
-            const label = isOther ? title : "You";
+            const label = isOther ? title : 'You';
 
-            const time = new Date(msg.createdAt).toLocaleDateString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
+            const time = new Date(msg.createdAt).toLocaleDateString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit'
             });
 
             return (
-              <div
-                className={`flex gap-2 text-xs ${
-                  isOther ? "justify-start" : "justify-end"
-                }`}
-                key={msg.id}
-              >
-                <div className={`max-w-xs ${isOther ? "" : "order-2"}`}>
+              <div className={`flex gap-2 text-xs ${isOther ? 'justify-start' : 'justify-end'}`} key={msg.id}>
+                <div className={`max-w-xs ${isOther ? '' : 'order-2'}`}>
                   <div
                     className={`mb-1 text-[12px] font-medium ${
-                      isOther
-                        ? "text-muted-foreground"
-                        : "text-muted-foreground text-right"
+                      isOther ? 'text-muted-foreground' : 'text-muted-foreground text-right'
                     }`}
                   >
                     {label} - {time}
@@ -276,26 +239,16 @@ function DirectChatPanel(props: DirectChatPanelProps) {
                   {msg?.body && (
                     <div
                       className={`inline-block rounded-lg px-3 py-2 transition-colors duration-150
-                      ${
-                        isOther
-                          ? "bg-accent text-accent-foreground"
-                          : "bg-primary/80 text-primary-foreground"
-                      }
+                      ${isOther ? 'bg-accent text-accent-foreground' : 'bg-primary/80 text-primary-foreground'}
                       `}
                     >
-                      <p className="wrap-break-word text-[16px] leading-relaxed">
-                        {msg.body}
-                      </p>
+                      <p className="wrap-break-word text-[16px] leading-relaxed">{msg.body}</p>
                     </div>
                   )}
 
                   {msg?.imageUrl && (
                     <div className="mt-2 overflow-hidden rounded-lg border border-border">
-                      <img
-                        src={msg.imageUrl}
-                        alt="attachment"
-                        className="max-h-52 max-w-xs rounded-lg object-cover"
-                      />
+                      <img src={msg.imageUrl} alt="attachment" className="max-h-52 max-w-xs rounded-lg object-cover" />
                     </div>
                   )}
                 </div>
@@ -314,24 +267,16 @@ function DirectChatPanel(props: DirectChatPanelProps) {
       <div className="space-y-3 border-t border-border bg-car  p-5">
         {imageUrl && (
           <div className="rounded-lg border border-border bg-background/70 p-2">
-            <p className="text-[12px] text-muted-foreground mb-2">
-              Image ready to send:
-            </p>
-            <img
-              src={imageUrl}
-              alt="pending"
-              className="max-h-32 rounded-lg border border-border object-contain"
-            />
+            <p className="text-[12px] text-muted-foreground mb-2">Image ready to send:</p>
+            <img src={imageUrl} alt="pending" className="max-h-32 rounded-lg border border-border object-contain" />
           </div>
         )}
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             {/* image upload component  */}
-            <ImageUploadButton onImageUpload={(url) => setImageUrl(url)} />
-            <span className="text-[11px] text-muted-foreground">
-              Cloudinary Image Upload
-            </span>
+            <ImageUploadButton onImageUpload={url => setImageUrl(url)} />
+            <span className="text-[11px] text-muted-foreground">Cloudinary Image Upload</span>
           </div>
 
           <div className="flex gap-2">
@@ -344,11 +289,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
               disabled={!connected || sending}
               className="min-h-14 resize-none border-border bg-background text-sm"
             />
-            <Button
-              size="icon"
-              onClick={handleSend}
-              disabled={sending || !connected || (!input.trim() && !imageUrl)}
-            >
+            <Button size="icon" onClick={handleSend} disabled={sending || !connected || (!input.trim() && !imageUrl)}>
               <Send className="w-4 h-4" />
             </Button>
           </div>
