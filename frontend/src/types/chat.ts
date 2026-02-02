@@ -24,6 +24,11 @@ export type DirectMessage = {
   };
 };
 
+export type PaginatedMessagesResponse = {
+  data: DirectMessage[];
+  hasMore: boolean;
+};
+
 export type RawDirectMessage = Record<string, any>;
 
 export function mapDirectMessage(r: RawDirectMessage): DirectMessage {
@@ -49,8 +54,12 @@ export function mapDirectMessage(r: RawDirectMessage): DirectMessage {
   };
 }
 
-export function mapDirectMessagesResponse(res: unknown): DirectMessage[] {
+export function mapDirectMessagesResponse(res: unknown): PaginatedMessagesResponse {
   const rawList = Array.isArray(res) ? res : Array.isArray((res as any)?.data) ? (res as any).data : [];
+  const hasMore = (res as any)?.hasMore ?? false;
 
-  return (rawList as RawDirectMessage[]).map(mapDirectMessage);
+  return {
+    data: (rawList as RawDirectMessage[]).map(mapDirectMessage),
+    hasMore
+  };
 }

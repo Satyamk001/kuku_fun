@@ -157,6 +157,10 @@
   }
 }
 
+body {
+  overflow-y: hidden;
+}
+
 @layer utilities {
   @keyframes shimmer {
     0% {

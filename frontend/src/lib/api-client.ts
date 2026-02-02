@@ -33,6 +33,13 @@ export async function apiGet<T>(client: AxiosInstance, url: string, config?: Axi
   return response.data.data;
 }
 
+// For endpoints that return the full response object (e.g., with pagination metadata)
+export async function apiGetRaw<T>(client: AxiosInstance, url: string, config?: AxiosRequestConfig): Promise<T> {
+  const response = await client.get<T>(url, config);
+
+  return response.data;
+}
+
 export async function apiPatch<TBody, TResponse>(
   client: AxiosInstance,
   url: string,

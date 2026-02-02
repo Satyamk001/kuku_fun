@@ -3,7 +3,7 @@ import { Suspense } from 'react';
 
 export default function ThreadsPage() {
   return (
-    <div className="flex w-full   flex-1 flex-col">
+    <div className="flex w-full overflow-y-hidden py-2  flex-1 flex-col">
       <Suspense fallback={<div>Loading threads...</div>}>
         <ThreadsHomePage />
       </Suspense>

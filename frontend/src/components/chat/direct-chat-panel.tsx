@@ -1,9 +1,9 @@
 'use client';
 
-import { apiGet, createBrowserApiClient } from '@/lib/api-client';
-import { ChatUser, DirectMessage, mapDirectMessage, mapDirectMessagesResponse, RawDirectMessage } from '@/types/chat';
+import { apiGetRaw, createBrowserApiClient } from '@/lib/api-client';
+import { ChatUser, DirectMessage, mapDirectMessage, mapDirectMessagesResponse, PaginatedMessagesResponse, RawDirectMessage } from '@/types/chat';
 import { useAuth } from '@clerk/nextjs';
-import { ChangeEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, KeyboardEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type Socket } from 'socket.io-client';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { ArrowLeft, Send, Wifi, WifiOff } from 'lucide-react';
@@ -34,31 +34,81 @@ function DirectChatPanel(props: DirectChatPanelProps) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
 
+  const [pageNo, setPageNo] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialLoadRef = useRef(true);
+  const loadingRef = useRef(false);
+  const hasMoreRef = useRef(true);
+  const lastScrollTopRef = useRef(0);
+  const scrollSnapshotRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
 
+  // Auto-scroll to bottom on initial load handled in useLayoutEffect now
+
+  // Reset state when switching conversations
   useEffect(() => {
-    messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    setMessages([]);
+    setPageNo(1);
+    setHasMore(true);
+    hasMoreRef.current = true;
+    isInitialLoadRef.current = true;
+    loadingRef.current = false;
+    lastScrollTopRef.current = 0;
+  }, [otherUserId]);
 
+  // Load messages
   useEffect(() => {
     let isMounted = true;
 
     async function load() {
+      // Guard: Don't load if already loading or no more messages
+      if (loadingRef.current) {
+        return;
+      }
+      
+      if (pageNo > 1 && !hasMore) {
+        return;
+      }
+
+      loadingRef.current = true;
       setIsLoading(true);
 
       try {
-        const res = await apiGet<DirectMessage[]>(apiClient, `/api/chat/conversations/${otherUserId}/messages`, {
+        const res = await apiGetRaw<unknown>(apiClient, `/api/chat/conversations/${otherUserId}/messages`, {
           params: {
-            limit: 100
+            limit: 20,
+            page: pageNo
           }
         });
 
         if (!isMounted) return;
-        setMessages(mapDirectMessagesResponse(res));
+        
+        const { data: newMessages, hasMore: responseHasMore } = mapDirectMessagesResponse(res);
+        
+        // Store scroll position before adding messages (for pagination)
+        const container = messagesContainerRef.current;
+        if (container && pageNo > 1) {
+          scrollSnapshotRef.current = {
+            scrollHeight: container.scrollHeight,
+            scrollTop: container.scrollTop
+          };
+        }
+        
+        setMessages((prev) => {
+          const existingIds = new Set(prev.map(m => m.id));
+          const uniqueNewMessages = newMessages.filter(m => !existingIds.has(m.id));
+          return [...uniqueNewMessages, ...prev];
+        });
+        
+        setHasMore(responseHasMore);
+        hasMoreRef.current = responseHasMore;
       } catch (err) {
         console.log(err);
       } finally {
+        loadingRef.current = false;
         setIsLoading(false);
       }
     }
@@ -69,9 +119,38 @@ function DirectChatPanel(props: DirectChatPanelProps) {
 
     return () => {
       isMounted = false;
+      loadingRef.current = false;
     };
-  }, [apiClient, otherUserId]);
+  }, [otherUserId, pageNo]);
 
+  // Restore scroll position immediately after render but before paint
+  useLayoutEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Case 1: Initial Load -> Scroll to bottom
+    if (isInitialLoadRef.current && messages.length > 0) {
+      // Use smooth behavior for better UX if preferred, or auto for instant
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    // Case 2: Pagination -> Restore scroll position
+    if (scrollSnapshotRef.current) {
+      const { scrollHeight: prevScrollHeight, scrollTop: prevScrollTop } = scrollSnapshotRef.current;
+      const newScrollHeight = container.scrollHeight;
+      
+      // Calculate new scroll position to keep focus on the same content
+      const scrollDiff = newScrollHeight - prevScrollHeight;
+      container.scrollTop = prevScrollTop + scrollDiff;
+      
+      // Reset snapshot
+      scrollSnapshotRef.current = null;
+    }
+  }, [messages]);
+
+  // Socket message handling
   useEffect(() => {
     if (!socket) return;
 
@@ -83,6 +162,11 @@ function DirectChatPanel(props: DirectChatPanelProps) {
       }
 
       setMessages(prev => [...prev, mapped]);
+      
+      // Auto-scroll to bottom for new messages
+      setTimeout(() => {
+        messagesEndRef?.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
     }
 
     function handleTyping(payload: { senderUserId?: number; receipientUserId?: number; isTyping?: boolean }) {
@@ -105,6 +189,30 @@ function DirectChatPanel(props: DirectChatPanelProps) {
       socket.off('dm:typing', handleTyping);
     };
   }, [socket, otherUserId]);
+
+  // Scroll-based pagination: Load more when scrolling near the top
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const currentScrollTop = container.scrollTop;
+      const isScrollingUp = currentScrollTop < lastScrollTopRef.current;
+      lastScrollTopRef.current = currentScrollTop;
+
+      // Trigger load when within 100px of the top AND scrolling up
+      // Use refs to check latest state without dependencies
+      if (currentScrollTop < 100 && isScrollingUp && !loadingRef.current && hasMoreRef.current) {
+        setPageNo(prev => prev + 1);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   function setSendTyping(isTyping: boolean) {
     if (!socket) {
@@ -213,10 +321,18 @@ function DirectChatPanel(props: DirectChatPanelProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-background/60 p-4 max-h-[calc(100vh-20rem)] md:max-h-[calc(100vh-16rem)] scroll-smooth scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40">
-        {isLoading && (
+      <CardContent 
+        ref={messagesContainerRef}
+        className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-background/60 p-4 max-h-[calc(100vh-20rem)] md:max-h-[calc(100vh-16rem)] scroll-smooth scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40"
+      >
+        {isLoading && pageNo === 1 && (
           <div className="flex items-center justify-center py-8">
             <p className="text-xs text-muted-foreground">Loading messages...</p>
+          </div>
+        )}
+        {isLoading && pageNo > 1 && (
+          <div className="flex items-center justify-center py-4">
+            <p className="text-xs text-muted-foreground">Loading older messages...</p>
           </div>
         )}
         {!isLoading && messages.length === 0 && (
@@ -225,10 +341,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
           </div>
         )}
 
-        {!isLoading &&
-          messages.map(msg => {
-            console.log(msg.senderUserId, otherUserId, 'otherUserId');
-
+        {messages.map((msg, index) => {
             const isOther = msg.senderUserId === otherUserId;
             const label = isOther ? title : 'You';
 
@@ -238,7 +351,10 @@ function DirectChatPanel(props: DirectChatPanelProps) {
             });
 
             return (
-              <div className={`flex gap-2 text-xs min-w-0 ${isOther ? 'justify-start' : 'justify-end'}`} key={msg.id}>
+              <div 
+                className={`flex gap-2 text-xs min-w-0 ${isOther ? 'justify-start' : 'justify-end'}`} 
+                key={msg.id}
+              >
                 <div className={`min-w-0 max-w-[85%] sm:max-w-md md:max-w-lg ${isOther ? '' : 'order-2'}`}>
                   <div
                     className={`mb-1 text-[12px] font-medium ${
@@ -309,7 +425,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
           <div className="flex items-center justify-between gap-2">
             {/* image upload component  */}
             <ImageUploadButton onImageUpload={url => setImageUrl(url)} />
-            <span className="text-[11px] text-muted-foreground">Cloudinary Image Upload</span>
+            {/* <span className="text-[11px] text-muted-foreground">Cl oudinary Image Upload</span> */}
           </div>
 
           <div className="space-y-1">
