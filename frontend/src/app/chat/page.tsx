@@ -36,12 +36,8 @@ function Chat() {
           displayName: row.displayName ?? null,
           handle: row.handle ?? null,
           avatarUrl: row.avatarUrl ?? null
-        }));
+        }))
         setUsers(finalRes);
-
-        if (res.length > 0 && activeUserId === null) {
-          setActiveUserId(res[0].id);
-        }
       } catch (err) {
         console.log(err);
       } finally {
@@ -77,8 +73,8 @@ function Chat() {
   console.log(onlineCount, 'usersCount');
 
   return (
-    <div className="max-auto max-w-6xl flex w-full flex-col gap-4 py-6 md:flex-row md:gap-6">
-      <aside className="w-full shrink-0 md:w-72">
+    <div className="mx-auto max-w-6xl flex w-full flex-col gap-4 py-6 md:flex-row md:gap-6 max-h-[calc(100vh-6rem)] overflow-hidden md:items-start">
+      <aside className={cn('w-full shrink-0 md:w-72', activeUserId ? 'hidden md:block' : 'block')}>
         <Card className="h-full border-border/70 bg-card md:sticky md:top-24">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
@@ -89,7 +85,7 @@ function Chat() {
               {onlineCount} Online - {users.length} total
             </p>
           </CardHeader>
-          <CardContent className="flex max-h-[calc(100vh-12rem)] flex-col gap-1 overflow-y-auto">
+          <CardContent className="flex max-h-[60vh] md:max-h-[calc(100vh-12rem)] flex-col gap-1 overflow-y-auto">
             {loadingUsers && <p className="text-muted-foreground">Loading users...</p>}
 
             {!loadingUsers &&
@@ -127,9 +123,15 @@ function Chat() {
         </Card>
       </aside>
 
-      <main className="min-h-[calc(100vh-8rem)] flex-1 md:min-h-auto">
+      <main className={cn('min-h-[calc(100vh-8rem)] flex-1 md:min-h-auto', !activeUserId ? 'hidden md:block' : 'block')}>
         {activeUserId && activeUser ? (
-          <DirectChatPanel otherUserId={activeUserId} otherUser={activeUser} socket={socket} connected={connected} />
+          <DirectChatPanel
+            otherUserId={activeUserId}
+            otherUser={activeUser}
+            socket={socket}
+            connected={connected}
+            onBack={() => setActiveUserId(null)}
+          />
         ) : (
           <Card className="flex h-full items-center justify-center border-border/70 bg-card">
             <CardContent className="text-center">

@@ -6,7 +6,7 @@ import { useAuth } from '@clerk/nextjs';
 import { ChangeEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { type Socket } from 'socket.io-client';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { Send, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Send, Wifi, WifiOff } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
@@ -17,10 +17,11 @@ type DirectChatPanelProps = {
   otherUser: ChatUser | null;
   socket: Socket | null;
   connected: boolean;
+  onBack: () => void;
 };
 
 function DirectChatPanel(props: DirectChatPanelProps) {
-  const { otherUser, otherUserId, socket, connected } = props;
+  const { otherUser, otherUserId, socket, connected, onBack } = props;
   const { getToken } = useAuth();
 
   const apiClient = useMemo(() => createBrowserApiClient(getToken), [getToken]);
@@ -31,6 +32,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
   const [sending, setSending] = useState(false);
   const [typingLabel, setTypingLabel] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -114,6 +116,11 @@ function DirectChatPanel(props: DirectChatPanelProps) {
 
   function handleInputChange(event: ChangeEvent<HTMLTextAreaElement>) {
     const value = event.target.value;
+    
+    // Limit to 500 characters
+    if (value.length > 500) {
+      return;
+    }
 
     setInput(value);
 
@@ -174,11 +181,16 @@ function DirectChatPanel(props: DirectChatPanelProps) {
       : (otherUser?.displayName ?? 'Conversation');
 
   return (
-    <Card className="flex h-full flex-col overflow-hidden border-border/70 bg-card">
+    <Card className="flex h-full max-h-[calc(100vh-8rem)] flex-col overflow-hidden border-border/70 bg-card">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border pb-3">
-        <div>
-          <CardTitle className="text-base text-foreground">{title}</CardTitle>
-          <p className="mt-0.5 text-xs text-muted-foreground">Direct message conversation</p>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 -ml-2" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <CardTitle className="text-base text-foreground">{title}</CardTitle>
+            <p className="mt-0.5 text-xs text-muted-foreground">Direct message conversation</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <span
@@ -201,7 +213,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 space-y-3 overflow-y-auto bg-background/60 p-4">
+      <CardContent className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-background/60 p-4 max-h-[calc(100vh-20rem)] md:max-h-[calc(100vh-16rem)] scroll-smooth scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40">
         {isLoading && (
           <div className="flex items-center justify-center py-8">
             <p className="text-xs text-muted-foreground">Loading messages...</p>
@@ -226,8 +238,8 @@ function DirectChatPanel(props: DirectChatPanelProps) {
             });
 
             return (
-              <div className={`flex gap-2 text-xs ${isOther ? 'justify-start' : 'justify-end'}`} key={msg.id}>
-                <div className={`max-w-xs ${isOther ? '' : 'order-2'}`}>
+              <div className={`flex gap-2 text-xs min-w-0 ${isOther ? 'justify-start' : 'justify-end'}`} key={msg.id}>
+                <div className={`min-w-0 max-w-[85%] sm:max-w-md md:max-w-lg ${isOther ? '' : 'order-2'}`}>
                   <div
                     className={`mb-1 text-[12px] font-medium ${
                       isOther ? 'text-muted-foreground' : 'text-muted-foreground text-right'
@@ -238,17 +250,37 @@ function DirectChatPanel(props: DirectChatPanelProps) {
 
                   {msg?.body && (
                     <div
-                      className={`inline-block rounded-lg px-3 py-2 transition-colors duration-150
+                      className={`inline-block rounded-lg px-3 py-2 transition-colors duration-150 overflow-hidden max-w-full
                       ${isOther ? 'bg-accent text-accent-foreground' : 'bg-primary/80 text-primary-foreground'}
                       `}
                     >
-                      <p className="wrap-break-word text-[16px] leading-relaxed">{msg.body}</p>
+                      <p className="break-all text-sm sm:text-base leading-relaxed">
+                        {expandedMessages.has(msg.id) || msg.body.length <= 100
+                          ? msg.body
+                          : `${msg.body.substring(0, 100)}...`}
+                        {msg.body.length > 100 && (
+                          <button
+                            onClick={() => {
+                              const newExpanded = new Set(expandedMessages);
+                              if (expandedMessages.has(msg.id)) {
+                                newExpanded.delete(msg.id);
+                              } else {
+                                newExpanded.add(msg.id);
+                              }
+                              setExpandedMessages(newExpanded);
+                            }}
+                            className="ml-2 text-xs underline opacity-80 hover:opacity-100"
+                          >
+                            {expandedMessages.has(msg.id) ? 'Show less' : 'Show more'}
+                          </button>
+                        )}
+                      </p>
                     </div>
                   )}
 
                   {msg?.imageUrl && (
                     <div className="mt-2 overflow-hidden rounded-lg border border-border">
-                      <img src={msg.imageUrl} alt="attachment" className="max-h-52 max-w-xs rounded-lg object-cover" />
+                      <img src={msg.imageUrl} alt="attachment" className="max-h-52 w-full max-w-full rounded-lg object-cover" />
                     </div>
                   )}
                 </div>
@@ -271,6 +303,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
             <img src={imageUrl} alt="pending" className="max-h-32 rounded-lg border border-border object-contain" />
           </div>
         )}
+        </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
@@ -279,22 +312,28 @@ function DirectChatPanel(props: DirectChatPanelProps) {
             <span className="text-[11px] text-muted-foreground">Cloudinary Image Upload</span>
           </div>
 
-          <div className="flex gap-2">
-            <Textarea
-              rows={2}
-              value={input}
-              onChange={handleInputChange}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
-              disabled={!connected || sending}
-              className="min-h-14 resize-none border-border bg-background text-sm"
-            />
-            <Button size="icon" onClick={handleSend} disabled={sending || !connected || (!input.trim() && !imageUrl)}>
-              <Send className="w-4 h-4" />
+          <div className="space-y-1">
+            <div className="flex gap-2">
+              <Textarea
+                rows={2}
+                value={input}
+                onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
+                placeholder="Type a message..."
+                disabled={!connected || sending}
+                className="min-h-14 resize-none border-border bg-background text-sm"
+              />
+              <Button size="icon" className="h-14 w-14" onClick={handleSend} disabled={sending || !connected || (!input.trim() && !imageUrl)}>
+                <Send className="w-4 h-4" />
             </Button>
           </div>
+          <div className="flex justify-between items-center px-1">
+            <span className={`text-[10px] ${input.length > 450 ? 'text-destructive' : 'text-muted-foreground'}`}>
+              {input.length}/500 characters
+            </span>
+          </div>
         </div>
-      </div>
+        </div>
     </Card>
   );
 }

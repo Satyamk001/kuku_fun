@@ -12,6 +12,7 @@ import { Plus, Search } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
 import { ThreadListSkeleton } from '../ui/skeleton';
+import { cn } from '@/lib/utils';
 
 function ThreadsHomePage() {
   const { getToken } = useAuth();
@@ -90,9 +91,51 @@ function ThreadsHomePage() {
     }
   }
 
+  const CategoryButton = ({
+    slug,
+    name,
+    isActive
+  }: {
+    slug: string;
+    name: string;
+    isActive: boolean;
+  }) => (
+    <button
+      onClick={() => {
+        setActiveCategory(slug);
+        applyFilters(slug, search);
+      }}
+      className={cn(
+        'cursor-pointer flex items-center px-4 py-2 lg:px-3 lg:py-3 text-sm font-medium transition-colors whitespace-nowrap rounded-full lg:rounded-md lg:w-full',
+        isActive
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'text-muted-foreground hover:bg-muted hover:text-foreground lg:hover:bg-card/80'
+      )}
+    >
+      {name}
+    </button>
+  );
+
   return (
-    <div className="flex w-full flex-col gap-6 lg:flex-row">
-      <aside className="w-full shrink-0 lg:w-72">
+    <div className="flex w-full flex-col gap-4 lg:gap-6 lg:flex-row">
+      {/* Mobile Categories - Horizontal Scroll */}
+      <div className="w-full overflow-x-auto pb-2 lg:hidden no-scrollbar">
+        <div className="flex gap-2">
+          <CategoryButton slug="all" name="All categories" isActive={activeCategory === 'all'} />
+          {!isLoading &&
+            categories.map(cat => (
+              <CategoryButton
+                key={cat.slug}
+                slug={cat.slug}
+                name={cat.name}
+                isActive={activeCategory === cat.slug}
+              />
+            ))}
+        </div>
+      </div>
+
+      {/* Desktop Sidebar - Vertical List */}
+      <aside className="hidden w-full shrink-0 lg:block lg:w-72">
         <Card className="sticky top-24 border-sidebar-border bg-card">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -108,15 +151,7 @@ function ThreadsHomePage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            <button
-              onClick={() => {
-                setActiveCategory('all');
-                applyFilters('all', search);
-              }}
-              className="cursor-pointer flex w-full items-center px-3 py-3 text-sm font-medium transition-colors text-muted-foreground hover:bg-card/80 hover:text-foreground"
-            >
-              All categories
-            </button>
+            <CategoryButton slug="all" name="All categories" isActive={activeCategory === 'all'} />
             {isLoading && (
               <div className="flex items-center justify-center rounded-lg border border-border bg-card py-10">
                 <p className="text-sm text-muted-foreground">Loading Categories...</p>
@@ -124,25 +159,28 @@ function ThreadsHomePage() {
             )}
             {!isLoading &&
               categories.map(cat => (
-                <button
+                <CategoryButton
                   key={cat.slug}
-                  onClick={() => {
-                    setActiveCategory(cat.slug);
-                    applyFilters(cat.slug, search);
-                  }}
-                  className="cursor-pointer flex w-full items-center px-3 py-3 text-sm font-medium transition-colors text-muted-foreground hover:bg-card/80 hover:text-foreground"
-                >
-                  {cat.name}
-                </button>
+                  slug={cat.slug}
+                  name={cat.name}
+                  isActive={activeCategory === cat.slug}
+                />
               ))}
           </CardContent>
         </Card>
       </aside>
 
-      <div className="flex-1 space-y-6">
+      <div className="flex-1 space-y-4 lg:space-y-6">
         <Card className="border-border/70 bg-card/95">
-          <CardHeader className="pb-5">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">Latest Threads</h1>
+          <CardHeader className="pb-4 lg:pb-5">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold tracking-tight text-foreground md:text-3xl">Latest Threads</h1>
+              <Link href="/threads/new" className="lg:hidden">
+                <Button size="icon" className="h-8 w-8 rounded-full bg-primary text-primary-foreground">
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
@@ -175,7 +213,7 @@ function ThreadsHomePage() {
               </div>
             </div>
 
-            <Link href="/threads/new">
+            <Link href="/threads/new" className="hidden lg:block">
               <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90 md:w-auto">
                 <Plus className="w-4 h-4" />
                 New Thread
@@ -216,7 +254,7 @@ function ThreadsHomePage() {
                           </span>
                         </div>
 
-                        <CardTitle className="text-lg font-semibold text-foreground group-hover:text-primary">
+                        <CardTitle className="text-base lg:text-lg font-semibold text-foreground group-hover:text-primary">
                           {thread.title}
                         </CardTitle>
                       </div>
