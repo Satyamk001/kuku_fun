@@ -136,7 +136,7 @@ function ThreadsHomePage() {
 
       {/* Desktop Sidebar - Vertical List */}
       <aside className="hidden w-full shrink-0 lg:block lg:w-72">
-        <Card className="sticky top-24 border-sidebar-border bg-card">
+        <Card className="sticky border-sidebar-border bg-card">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Categories</CardTitle>
