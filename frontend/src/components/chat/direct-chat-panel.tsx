@@ -17,11 +17,12 @@ type DirectChatPanelProps = {
   otherUser: ChatUser | null;
   socket: Socket | null;
   connected: boolean;
+  isOtherUserOnline: boolean;
   onBack: () => void;
 };
 
 function DirectChatPanel(props: DirectChatPanelProps) {
-  const { otherUser, otherUserId, socket, connected, onBack } = props;
+  const { otherUser, otherUserId, socket, connected, isOtherUserOnline, onBack } = props;
   const { getToken } = useAuth();
 
   const apiClient = useMemo(() => createBrowserApiClient(getToken), [getToken]);
@@ -303,10 +304,10 @@ function DirectChatPanel(props: DirectChatPanelProps) {
         <div className="flex items-center gap-2">
           <span
             className={`flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium ${
-              connected ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground'
+              isOtherUserOnline ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground'
             }`}
           >
-            {connected ? (
+            {isOtherUserOnline ? (
               <>
                 <Wifi className="w-3 h-3" />
                 Online

@@ -2,12 +2,14 @@
 
 import { ColdStartLoader } from '@/components/ui/cold-start-loader';
 import { useSocket } from '@/hooks/use-socket';
+import { useAuth } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
 
 export function AppLoader({ children }: { children: React.ReactNode }) {
   const [showLoader, setShowLoader] = useState(false);
   const [hasShownLoader, setHasShownLoader] = useState(false);
   const { connected } = useSocket();
+  const { isLoaded, userId } = useAuth();
 
   useEffect(() => {
     // Check if loader has been shown in this session
@@ -21,15 +23,11 @@ export function AppLoader({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Track when connection is established
-  useEffect(() => {
-    if (connected && showLoader) {
-      setHasShownLoader(true);
-    }
-  }, [connected, showLoader]);
+
 
   if (showLoader && !hasShownLoader) {
-    return <ColdStartLoader isLoading={!connected} onComplete={() => setShowLoader(false)} />;
+    const isLoading = !isLoaded || (!!userId && !connected);
+    return <ColdStartLoader isLoading={isLoading} onComplete={() => setShowLoader(false)} />;
   }
 
   return <>{children}</>;

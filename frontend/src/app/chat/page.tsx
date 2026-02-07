@@ -130,6 +130,7 @@ function Chat() {
             otherUser={activeUser}
             socket={socket}
             connected={connected}
+            isOtherUserOnline={onlineUserIds.includes(activeUserId)}
             onBack={() => setActiveUserId(null)}
           />
         ) : (
