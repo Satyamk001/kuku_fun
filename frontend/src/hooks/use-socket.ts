@@ -7,12 +7,14 @@ import { io, type Socket } from 'socket.io-client';
 type UseSocketResult = {
   socket: Socket | null;
   connected: boolean;
+  error: string | null;
 };
 
 export function useSocket(): UseSocketResult {
   const { userId, isLoaded } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -46,6 +48,7 @@ export function useSocket(): UseSocketResult {
       console.log(`[Socket], ${socketInstance.id}`);
 
       setConnected(true);
+      setError(null);
     };
 
     const handleDisConnect = (reason: any) => {
@@ -55,6 +58,8 @@ export function useSocket(): UseSocketResult {
 
     const handleConnectError = (err: any) => {
       console.error(err);
+      setError(err.message || 'Failed to connect to chat server');
+      setConnected(false);
     };
 
     socketInstance.on('connect', handleConnect);
@@ -71,5 +76,5 @@ export function useSocket(): UseSocketResult {
     };
   }, [userId, isLoaded]);
 
-  return { socket, connected };
+  return { socket, connected, error };
 }
