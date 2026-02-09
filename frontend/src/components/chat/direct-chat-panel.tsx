@@ -318,6 +318,12 @@ function DirectChatPanel(props: DirectChatPanelProps) {
 
   function handleDragLeave(e: React.DragEvent) {
     e.preventDefault();
+    
+    // Check if we are dragging into a child element (which triggers leave on parent)
+    if (e.currentTarget.contains(e.relatedTarget as Node)) {
+      return;
+    }
+
     setIsDragging(false);
   }
 
@@ -353,7 +359,6 @@ function DirectChatPanel(props: DirectChatPanelProps) {
     }
   }
 
-
   async function handleRemoveAttachment() {
     if (!imageUrl) return;
 
@@ -377,7 +382,24 @@ function DirectChatPanel(props: DirectChatPanelProps) {
 
   return (
     <>
-    <Card className="flex h-full max-h-[calc(100vh-8rem)] flex-col overflow-hidden border-border/70 bg-card">
+    <Card 
+      className="flex h-full max-h-[calc(100vh-8rem)] flex-col overflow-hidden border-border/70 bg-card relative"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background pointer-events-none animate-in fade-in zoom-in duration-200 border-2 border-dashed border-primary/50 m-2 rounded-xl">
+          <div className="text-center flex flex-col items-center gap-2">
+             <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+               <Download className="h-10 w-10 text-primary animate-bounce" />
+             </div>
+             <h3 className="text-xl font-semibold text-primary">Drop file here to upload</h3>
+             <p className="text-sm text-muted-foreground">Release to send the file</p>
+          </div>
+        </div>
+      )}
+
       <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border pb-3">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 -ml-2" onClick={onBack}>
@@ -411,21 +433,8 @@ function DirectChatPanel(props: DirectChatPanelProps) {
 
       <CardContent 
         ref={messagesContainerRef}
-        className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-background/60 p-4 max-h-[calc(100vh-20rem)] md:max-h-[calc(100vh-16rem)] scroll-smooth scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40 relative"
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-background/60 p-4 max-h-[calc(100vh-20rem)] md:max-h-[calc(100vh-16rem)] scroll-smooth scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40"
       >
-        {isDragging && (
-          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in zoom-in duration-200 border-2 border-dashed border-primary m-4 rounded-xl">
-            <div className="text-center">
-               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                 <Download className="h-8 w-8 text-primary animate-bounce" />
-               </div>
-               <h3 className="text-lg font-semibold">Drop file to upload</h3>
-            </div>
-          </div>
-        )}
 
         {isLoading && pageNo === 1 && (
           <div className="flex items-center justify-center py-8">
