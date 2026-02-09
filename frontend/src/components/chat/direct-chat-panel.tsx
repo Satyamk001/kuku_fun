@@ -6,11 +6,12 @@ import { useAuth } from '@clerk/nextjs';
 import { ChangeEvent, KeyboardEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type Socket } from 'socket.io-client';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { ArrowLeft, Send, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, Send, Wifi, WifiOff, FileIcon, Download, FileText } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import ImageUploadButton from './image-upload-button';
+import { ImageModal } from '../ui/image-modal';
 
 type DirectChatPanelProps = {
   otherUserId: number;
@@ -34,6 +35,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
   const [typingLabel, setTypingLabel] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const [pageNo, setPageNo] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -289,7 +291,92 @@ function DirectChatPanel(props: DirectChatPanelProps) {
       ? `@${otherUser?.handle}`
       : (otherUser?.displayName ?? 'Conversation');
 
+  function isImage(url: string) {
+    if (!url) return false;
+    // Strictly check for browser-supported image extensions
+    return /\.(jpeg|jpg|gif|png|webp|svg|bmp)$/i.test(url);
+  }
+
+  function getFileName(url: string) {
+    return url.split('/').pop() || 'File';
+  }
+
+  function getFileIcon(url: string, className = "h-5 w-5") {
+    if (/\.pdf$/i.test(url)) return <FileText className={`${className} text-red-500`} />;
+    if (/\.(doc|docx)$/i.test(url)) return <FileText className={`${className} text-blue-500`} />;
+    if (/\.(txt|md)$/i.test(url)) return <FileText className={`${className} text-stone-500`} />;
+    return <FileIcon className={`${className} text-primary`} />;
+  }
+
+  // Drag and drop handlers
+  const [isDragging, setIsDragging] = useState(false);
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+  }
+
+  async function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+
+    await uploadFile(file);
+  }
+
+  async function uploadFile(file: File) {
+     try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      toast('Uploading file...');
+
+      const res = await apiClient.post('/api/upload/image-upload', formData);
+      const url: string | undefined = res.data?.url;
+
+      if (!url) {
+        throw new Error('No url is found');
+      }
+
+      setImageUrl(url);
+      toast.success('File attached');
+    } catch (e) {
+      console.log(e);
+      toast.error('Upload failed');
+    }
+  }
+
+
+  async function handleRemoveAttachment() {
+    if (!imageUrl) return;
+
+    const urlToDelete = imageUrl;
+    setImageUrl(null); // Optimistic update
+
+    try {
+      // Determine resource type based on URL structure (Cloudinary specific)
+      // If it contains '/raw/', it's a raw file. Otherwise treat as 'image' (which covers 'auto' -> 'image'/pdf).
+      const resourceType = urlToDelete.includes('/raw/') ? 'raw' : 'image';
+
+      await apiClient.post('/api/upload/delete', {
+        url: urlToDelete,
+        resourceType: resourceType
+      });
+    } catch (err) {
+      console.error('Failed to delete file from cloud', err);
+      // We don't necessarily need to revert UI for this, just log it
+    }
+  }
+
   return (
+    <>
     <Card className="flex h-full max-h-[calc(100vh-8rem)] flex-col overflow-hidden border-border/70 bg-card">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border pb-3">
         <div className="flex items-center gap-3">
@@ -302,30 +389,44 @@ function DirectChatPanel(props: DirectChatPanelProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span
-            className={`flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium ${
-              isOtherUserOnline ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground'
-            }`}
-          >
-            {isOtherUserOnline ? (
-              <>
-                <Wifi className="w-3 h-3" />
-                Online
-              </>
-            ) : (
-              <>
-                <WifiOff className="w-3 h-3" />
-                Offline
-              </>
-            )}
-          </span>
-        </div>
+           <span
+             className={`flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium ${
+               isOtherUserOnline ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground'
+             }`}
+           >
+             {isOtherUserOnline ? (
+               <>
+                 <Wifi className="w-3 h-3" />
+                 Online
+               </>
+             ) : (
+               <>
+                 <WifiOff className="w-3 h-3" />
+                 Offline
+               </>
+             )}
+           </span>
+         </div>
       </CardHeader>
 
       <CardContent 
         ref={messagesContainerRef}
-        className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-background/60 p-4 max-h-[calc(100vh-20rem)] md:max-h-[calc(100vh-16rem)] scroll-smooth scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40"
+        className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-background/60 p-4 max-h-[calc(100vh-20rem)] md:max-h-[calc(100vh-16rem)] scroll-smooth scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40 relative"
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
+        {isDragging && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in zoom-in duration-200 border-2 border-dashed border-primary m-4 rounded-xl">
+            <div className="text-center">
+               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                 <Download className="h-8 w-8 text-primary animate-bounce" />
+               </div>
+               <h3 className="text-lg font-semibold">Drop file to upload</h3>
+            </div>
+          </div>
+        )}
+
         {isLoading && pageNo === 1 && (
           <div className="flex items-center justify-center py-8">
             <p className="text-xs text-muted-foreground">Loading messages...</p>
@@ -396,8 +497,37 @@ function DirectChatPanel(props: DirectChatPanelProps) {
                   )}
 
                   {msg?.imageUrl && (
-                    <div className="mt-2 overflow-hidden rounded-lg border border-border">
-                      <img src={msg.imageUrl} alt="attachment" className="max-h-52 w-full max-w-full rounded-lg object-cover" />
+                    <div className="mt-2 text-left">
+                      {isImage(msg.imageUrl) ? (
+                        <div 
+                          className="overflow-hidden rounded-lg border border-border cursor-pointer transition-opacity hover:opacity-90 max-w-[200px]"
+                          onClick={() => setSelectedImage(msg.imageUrl)}
+                        >
+                          <img 
+                            src={msg.imageUrl} 
+                            alt="attachment" 
+                            className="max-h-40 w-full object-cover" 
+                          />
+                        </div>
+                      ) : (
+                        <a 
+                          href={msg.imageUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className={`flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent/50 ${
+                            isOther ? 'bg-card' : 'bg-primary/5'
+                          }`}
+                        >
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                            {getFileIcon(msg.imageUrl, "h-5 w-5")}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="truncate text-xs font-medium text-foreground">{getFileName(msg.imageUrl)}</p>
+                            <p className="text-[10px] text-muted-foreground">Click to download</p>
+                          </div>
+                          <Download className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>
@@ -413,45 +543,75 @@ function DirectChatPanel(props: DirectChatPanelProps) {
         <div ref={messagesEndRef} />
       </CardContent>
 
-      <div className="space-y-3 border-t border-border bg-car  p-5">
-        {imageUrl && (
-          <div className="rounded-lg border border-border bg-background/70 p-2">
-            <p className="text-[12px] text-muted-foreground mb-2">Image ready to send:</p>
-            <img src={imageUrl} alt="pending" className="max-h-32 rounded-lg border border-border object-contain" />
-          </div>
-        )}
-        </div>
+      <div className="p-4 bg-background border-t border-border">
+          {/* Attachment Preview - Compact */}
+          {imageUrl && (
+            <div className="mb-2 flex items-center gap-2 rounded-md border border-border bg-muted/50 p-2 w-fit max-w-full">
+              {isImage(imageUrl) ? (
+                 <img src={imageUrl} alt="Attachment preview" className="h-10 w-10 rounded object-cover border border-border" />
+              ) : (
+                 <div className="flex h-10 w-10 items-center justify-center rounded bg-primary/10 border border-border">
+                    {getFileIcon(imageUrl, "h-5 w-5")}
+                 </div>
+              )}
+              <div className="flex-1 min-w-0 px-1">
+                 <p className="text-xs font-medium truncate max-w-[150px]">{getFileName(imageUrl)}</p>
+              </div>
+              <button 
+                onClick={handleRemoveAttachment} 
+                className="ml-2 rounded-full p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                title="Remove attachment"
+              >
+                  <span className="sr-only">Remove</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+          )}
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            {/* image upload component  */}
+          <div className="flex items-end gap-2">
             <ImageUploadButton onImageUpload={url => setImageUrl(url)} />
-            {/* <span className="text-[11px] text-muted-foreground">Cl oudinary Image Upload</span> */}
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex gap-2">
+            
+            <div className="relative flex-1">
               <Textarea
-                rows={2}
+                rows={1}
                 value={input}
                 onChange={handleInputChange}
                 onKeyDown={handleKeyDown}
                 placeholder="Type a message..."
                 disabled={!connected || sending}
-                className="min-h-14 resize-none border-border bg-background text-sm"
+                className="min-h-[44px] max-h-32 py-3 px-4 resize-none border-border bg-background text-sm w-full focus-visible:ring-1"
+                style={{ height: 'auto', minHeight: '44px' }}
+                onInput={(e) => {
+                  const target = e.target as HTMLTextAreaElement;
+                  target.style.height = 'auto';
+                  target.style.height = `${Math.min(target.scrollHeight, 128)}px`;
+                }}
               />
-              <Button size="icon" className="h-14 w-14" onClick={handleSend} disabled={sending || !connected || (!input.trim() && !imageUrl)}>
-                <Send className="w-4 h-4" />
+            </div>
+            
+            <Button 
+                size="icon" 
+                className="h-[44px] w-[44px] shrink-0" 
+                onClick={handleSend} 
+                disabled={sending || !connected || (!input.trim() && !imageUrl)}
+            >
+                <Send className="w-5 h-5" />
             </Button>
           </div>
-          <div className="flex justify-between items-center px-1">
+          <div className="flex justify-between items-center px-1 mt-1">
             <span className={`text-[10px] ${input.length > 450 ? 'text-destructive' : 'text-muted-foreground'}`}>
               {input.length}/500 characters
             </span>
           </div>
-        </div>
-        </div>
+      </div>
     </Card>
+
+    <ImageModal 
+      isOpen={!!selectedImage} 
+      src={selectedImage} 
+      onClose={() => setSelectedImage(null)} 
+    />
+    </>
   );
 }
 

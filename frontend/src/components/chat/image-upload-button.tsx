@@ -4,7 +4,7 @@ import { createBrowserApiClient } from '@/lib/api-client';
 import { useAuth } from '@clerk/nextjs';
 import { ChangeEvent, useMemo, useRef, useState } from 'react';
 import { Button } from '../ui/button';
-import { ImageIcon, Loader2 } from 'lucide-react';
+import { Loader2, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ImageUploadBtnProps = {
@@ -37,16 +37,17 @@ function ImageUploadButton({ onImageUpload }: ImageUploadBtnProps) {
       const url: string | undefined = res.data?.url;
 
       if (!url) {
-        throw new Error('No image url is found');
+        throw new Error('No url is found');
       }
 
       onImageUpload(url);
 
-      toast('Image uploaded successfully!', {
-        description: 'You can now send this image as message!!!'
+      toast('File uploaded successfully!', {
+        description: 'You can now send this attachment as message!!!'
       });
     } catch (e) {
       console.log(e);
+      toast.error('Upload failed');
     } finally {
       setUploading(false);
     }
@@ -54,7 +55,13 @@ function ImageUploadButton({ onImageUpload }: ImageUploadBtnProps) {
 
   return (
     <div>
-      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleOnImageFileChange} />
+      <input 
+        ref={inputRef} 
+        type="file" 
+        accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" 
+        className="hidden" 
+        onChange={handleOnImageFileChange} 
+      />
 
       <Button
         size="icon"
@@ -64,7 +71,7 @@ function ImageUploadButton({ onImageUpload }: ImageUploadBtnProps) {
         disabled={uploading}
         className="border-border/40 bg-card/60 text-muted-foreground hover:bg-card/90 hover:text-foreground"
       >
-        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+        {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
       </Button>
     </div>
   );
