@@ -55,6 +55,21 @@ Floating Input Bar: Modern pill-shaped input area.
 - Socket.IO: Implemented separate namespace handlers for scalable room management.
 - Auth Middleware: Corrected API authentication flow for new modules.
 
+### [v3.0.0] - 2026-02-12
+**Major Release: Friend System**
+- **Friends UI**: Dedicated `/friends` page with tabs for "Your Friends", "Requests" (Incoming/Outgoing), and "Find People".
+- **Chat Access**: Implemented "Friends-Only" restriction for Direct Messages.
+- **Notifications**: Visual updates for friend requests and rejections with correct descriptive text.
+- **Message Ticks**: Improved visibility of message status icons (Sent/Delivered/Read) for better contrast.
+
+## 🌟 New Feature: Friend System (v3.0.0)
+Connect with others to start chatting! The new social layer adds security and community features:
+
+- **Connect**: Search for users and send friend requests.
+- **Manage**: Accept or reject incoming requests.
+- **Chat Securely**: Direct Messages are now exclusive to accepted friends, preventing spam.
+- **Real-time Alerts**: Get instant notifications when someone adds you or accepts your request.
+
 ## Tech Stack
 
 -   **Framework**: [Next.js 14](https://nextjs.org/) (App Router)

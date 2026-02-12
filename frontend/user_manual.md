@@ -60,6 +60,8 @@ The landing page of Kuku Fun is the **Threads** feed. This is where structured, 
 ## 4. Direct Chat
 The **Chat** section (`/chat`) is for private, real-time one-on-one messaging.
 
+> **Note**: You can only exchange direct messages with users who are on your **Friends List**.
+
 ### Features
 - **Real-time Messaging**: Messages are delivered instantly via Socket.IO.
 - **File Sharing**:
@@ -92,7 +94,23 @@ The **Chat** section (`/chat`) is for private, real-time one-on-one messaging.
 
 ---
 
-## 6. Profile & Settings
+## 6. Friends & Connections
+Manage your social circle in the **Friends** section (`/friends`).
+
+### Features
+1. **Find People**:
+   - Search for users by name or handle to send a friend request.
+   - You cannot start a Direct Chat until they accept your request.
+2. **Friend Requests**:
+   - **Incoming**: Accept or Reject requests sent to you.
+   - **Outgoing**: View requests you have sent that are still pending.
+3. **Your Friends**:
+   - View your active friends list.
+   - Click the **Message** icon to instantly jump to a Direct Chat with them.
+
+---
+
+## 7. Profile & Settings
 Manage your public persona in the **Profile** section (`/profile`).
 
 ### Customizable Fields
@@ -108,11 +126,12 @@ Manage your public persona in the **Profile** section (`/profile`).
 
 ---
 
-## 7. Notifications
+## 8. Notifications
 Stay updated with the **Notification Center**:
 - Located in the top navigation bar (Bell icon).
 - Shows a **red badge** count for unread items.
 - Receive alerts for:
-  - **Replies** to your threads.
-  - **Likes** on your posts.
+  - **Friend Requests**: Know when someone wants to connect or accepts your request.
+  - **Replies**: When someone comments on your threads.
+  - **Likes**: When your posts are appreciated.
 - Real-time toast notifications appear at the bottom right when you are online.
