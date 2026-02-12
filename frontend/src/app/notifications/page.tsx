@@ -21,6 +21,18 @@ function formatText(n: Notification) {
     return `${actor} liked your thread`;
   }
 
+  if (n.type === 'FRIEND_REJECTED') {
+    return `${actor} rejected your friend request`;
+  }
+
+  if (n.type === 'FRIEND_REQUEST') {
+    return `${actor} sent you a friend request`;
+  }
+
+  if (n.type === 'FRIEND_ACCEPTED') {
+    return `${actor} accepted your friend request`;
+  }
+
   return `${actor} interacted with your thread`;
 }
 
@@ -73,7 +85,11 @@ function NotificationsPage() {
       console.log(err);
     }
 
-    router.push(`/threads/${n.threadId}`);
+    if (n.type === 'FRIEND_REQUEST' || n.type === 'FRIEND_ACCEPTED' || n.type === 'FRIEND_REJECTED') {
+      router.push('/friends');
+    } else {
+      router.push(`/threads/${n.threadId}`);
+    }
   }
 
   const unreadCount = notifications.filter(n => !n.readAt).length;
@@ -142,7 +158,7 @@ function NotificationsPage() {
                         })}
                       </span>
                     </div>
-                    <p className="mt-1 truncate text-sm text-muted-foreground">{n.thread.title}</p>
+                    {n.thread?.title && <p className="mt-1 truncate text-sm text-muted-foreground">{n.thread.title}</p>}
                     {isUnread && (
                       <div className="mt-2 flex items-center gap-2">
                         <Badge className="border-primary/30 bg-primary/10 text-[12px text-primary]" variant="outline">

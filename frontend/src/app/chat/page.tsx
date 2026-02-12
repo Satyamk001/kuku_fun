@@ -37,12 +37,45 @@ function Chat() {
           handle: row.handle ?? null,
           avatarUrl: row.avatarUrl ?? null,
           lastOnlineAt: row.lastOnlineAt ? new Date(row.lastOnlineAt).toISOString() : null
-        }))
+        }));
+        
+        // Handle deep linking via query param
+        const params = new URLSearchParams(window.location.search);
+        const targetUserIdStr = params.get('userId');
+        let targetUserAdded = false;
+
+        if (targetUserIdStr) {
+           const targetUserId = Number(targetUserIdStr);
+           if (Number.isFinite(targetUserId)) {
+              const existing = finalRes.find(u => u.id === targetUserId);
+              if (existing) {
+                 setActiveUserId(targetUserId);
+              } else {
+                 // Fetch user details if not in list
+                 try {
+                   const userRes = await apiGet<{ data: { user: ChatUser } }>(apiClient, `/api/users/${targetUserId}`);
+                   if (userRes && userRes.data && userRes.data.user && isMounted) {
+                      const newUser = {
+                        ...userRes.data.user,
+                        id: Number(userRes.data.user.id),
+                        lastOnlineAt: null // or fetch if available
+                      };
+                      finalRes.unshift(newUser); // Add to top
+                      setActiveUserId(targetUserId);
+                      targetUserAdded = true;
+                   }
+                 } catch (err) {
+                   console.error('Failed to fetch target user', err);
+                 }
+              }
+           }
+        }
+
         setUsers(finalRes);
       } catch (err) {
         console.log(err);
       } finally {
-        setLoadingUsers(false);
+        if (isMounted) setLoadingUsers(false);
       }
     }
     load();
@@ -50,7 +83,7 @@ function Chat() {
     return () => {
       isMounted = false;
     };
-  }, [getToken]);
+  }, [getToken, apiClient]);
 
   useEffect(() => {
     if (!socket) return;

@@ -10,7 +10,7 @@ export type Notification = {
     displayName: string | null;
     handle: string | null;
   };
-  thread: {
+  thread?: {
     title: string;
   };
 };

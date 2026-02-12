@@ -92,14 +92,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwn, showTa
         )}
 
         {/* Metadata (Time + Ticks) */}
-        <div className={`float-right -mt-1 flex items-center gap-1 text-[10px] ml-1 h-3 select-none ${isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+        <div className={`float-right -mt-1 flex items-center gap-1 text-[10px] ml-1 h-3 select-none ${isOwn ? 'text-primary-foreground/90' : 'text-muted-foreground'}`}>
           <span>{formatTime(message.createdAt)}</span>
           
           {isOwn && (
             <span>
-              {message.status === 'sent' && <Check size={14} strokeWidth={1.5} />}
-              {message.status === 'delivered' && <CheckCheck size={14} strokeWidth={1.5} />}
-              {message.status === 'read' && <CheckCheck size={14} strokeWidth={1.5} className="text-blue-300" />} 
+              {message.status === 'sent' && <Check size={15} strokeWidth={2} className="opacity-70" />}
+              {message.status === 'delivered' && <CheckCheck size={15} strokeWidth={2} className="opacity-70" />}
+              {message.status === 'read' && <CheckCheck size={15} strokeWidth={2.5} className="text-emerald-300" />} 
             </span>
           )}
         </div>
