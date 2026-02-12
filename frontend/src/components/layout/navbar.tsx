@@ -10,8 +10,11 @@ import { apiGet, createBrowserApiClient } from '@/lib/api-client';
 import { Notification } from '@/types/notification';
 import { useNotificationCount } from '@/hooks/use-notification-count';
 import { toast } from 'sonner';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 function Navbar() {
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const { getToken, userId } = useAuth();
@@ -54,11 +57,21 @@ function Navbar() {
     const handleNewNotification = (payload: Notification) => {
       incrementUnread();
 
+      let description = '';
+      if (payload.type === 'REPLY_ON_THREAD') {
+        description = `${payload.actor.handle ?? 'Someone'} commented to your thread`;
+      } else if (payload.type === 'LIKE_ON_THREAD') {
+        description = `${payload.actor.handle ?? 'Someone'} liked your thread`;
+      } else if (payload.type === 'FRIEND_REQUEST') {
+        description = `${payload.actor.handle ?? 'Someone'} sent you a friend request`;
+      } else if (payload.type === 'FRIEND_ACCEPTED') {
+        description = `${payload.actor.handle ?? 'Someone'} accepted your friend request`;
+      } else if (payload.type === 'FRIEND_REJECTED') {
+        description = `${payload.actor.handle ?? 'Someone'} rejected your friend request`;
+      }
+
       toast('New Notification', {
-        description:
-          payload.type === 'REPLY_ON_THREAD'
-            ? `${payload.actor.handle ?? 'Someone'} commented to your thread`
-            : `${payload.actor.handle ?? 'Someone'} liked your thread`
+        description
       });
     };
 
@@ -76,18 +89,33 @@ function Navbar() {
       match: (p?: string | null) => p?.startsWith('chat')
     },
     {
+      href: '/rooms',
+      label: 'Rooms',
+      match: (p?: string | null) => p?.startsWith('rooms')
+    },
+    {
       href: '/profile',
       label: 'Profile',
       match: (p?: string | null) => p?.startsWith('profile')
+    },
+    {
+      href: '/friends',
+      label: 'Friends',
+      match: (p?: string | null) => p?.startsWith('friends')
     }
   ];
 
-  const renderNavLinks = (item: (typeof navItems)[number]) => {
+  const renderNavLinks = (item: { href: string; label: string; match: (p?: string | null) => boolean | undefined }) => {
     return (
       <Link
         key={item.href}
         href={item.href}
-        className="flex items-center rounded-full px-3 py-2 text-sm font-medium transition-colors bg-primary/20 text-primary shadow-sm"
+        className={cn(
+            "flex items-center rounded-full px-3 py-2 text-sm font-medium transition-colors shadow-sm",
+            item.match(pathname?.slice(1)) 
+              ? "bg-primary/20 text-primary" 
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          )}
       >
         {item.label}
       </Link>
@@ -134,7 +162,7 @@ function Navbar() {
 
           <button
             type="button"
-            onClick={() => setMobileMenuOpen(open => !open)}
+            onClick={() => setMobileMenuOpen((open: boolean) => !open)}
             className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-accent text-muted-foreground transition-colors md:hidden"
           >
             {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}

@@ -27,8 +27,48 @@ A real-time chat application frontend built with **Next.js**, **TypeScript**, an
 -   **Image Modal**: Full-screen responsive modal for viewing image attachments.
 -   **Connection Error Handling**: Dedicated UI for socket connection failures and manual retry.
 
-### [v1.1.0] - Planned
--   *Upcoming features will be listed here.*
+### [v2.0.0] - 2026-02-12
+**Major Release: Topic Rooms**
+- **Topic Rooms**: Full-featured ephemeral chat rooms with category filtering and real-time updates.
+- **UI Overhaul**: Fixed layout issues in chat interface, ensuring 100% height utilization without scrolling the main window.
+- **Real-time Engine**: Upgraded socket handling to support multiple namespaces and robust reconnection logic.
+
+## 🌟 New Feature: Topic Rooms (v2.0.0)
+Create and join temporary, topic-based discussions! All messages and room data are ephemeral and automatically expire.
+
+- **Create Rooms**: Specify a topic (e.g., Tech, Music), duration (15m - 4h), and max participants.
+- **Join Active Rooms**: Browse a live list of active rooms with real-time participant counts.
+- **Real-time Chat**: Isolated chat experience separate from direct messages, powered by a dedicated Socket.IO namespace.
+- **Automatic Expiry**: Rooms and messages are deleted automatically after the set duration.
+- **Smart Layout**: Chat interface optimized for all screen sizes, ensuring the input area is always accessible.
+
+## 🎨 UI Enhancements (WhatsApp Style)
+We've polished the interface to feel more native and responsive:
+
+- Message Bubbles: Redesigned with proper tails, timestamps, and status ticks (server-side read receipts).
+- Typing Indicators: New 3-dot bounce animation replaces static text.
+- Attachment Preview: Click images to view them in a full-screen modal. Non-image files now show proper icons and filenames.
+Floating Input Bar: Modern pill-shaped input area.
+
+## 🛠 Technical Corrections
+- Database: Added topic_rooms, room_participants, room_messages tables.
+- Socket.IO: Implemented separate namespace handlers for scalable room management.
+- Auth Middleware: Corrected API authentication flow for new modules.
+
+### [v3.0.0] - 2026-02-12
+**Major Release: Friend System**
+- **Friends UI**: Dedicated `/friends` page with tabs for "Your Friends", "Requests" (Incoming/Outgoing), and "Find People".
+- **Chat Access**: Implemented "Friends-Only" restriction for Direct Messages.
+- **Notifications**: Visual updates for friend requests and rejections with correct descriptive text.
+- **Message Ticks**: Improved visibility of message status icons (Sent/Delivered/Read) for better contrast.
+
+## 🌟 New Feature: Friend System (v3.0.0)
+Connect with others to start chatting! The new social layer adds security and community features:
+
+- **Connect**: Search for users and send friend requests.
+- **Manage**: Accept or reject incoming requests.
+- **Chat Securely**: Direct Messages are now exclusive to accepted friends, preventing spam.
+- **Real-time Alerts**: Get instant notifications when someone adds you or accepts your request.
 
 ## Tech Stack
 
@@ -56,8 +96,10 @@ A real-time chat application frontend built with **Next.js**, **TypeScript**, an
     NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
     NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/
     NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/
-    NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
-    NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+    
+    # API & Socket Configuration
+    NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/chat-app/api
+    NEXT_PUBLIC_SOCKET_API=http://localhost:5000
     ```
 
 3.  **Run Development Server**:
