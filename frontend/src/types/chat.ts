@@ -3,6 +3,7 @@ export type ChatUser = {
   displayName: string | null;
   handle: string | null;
   avatarUrl: string | null;
+  lastOnlineAt: string | null;
 };
 
 export type DirectMessage = {
@@ -12,6 +13,7 @@ export type DirectMessage = {
   body: string | null;
   imageUrl: string | null;
   createdAt: string;
+  status: 'sent' | 'delivered' | 'read';
   sender: {
     displayName: string | null;
     handle: string | null;
@@ -39,6 +41,7 @@ export function mapDirectMessage(r: RawDirectMessage): DirectMessage {
     body: r.body ?? null,
     imageUrl: r.imageUrl ?? r.image_url ?? null,
     createdAt: r.createdAt ?? r.created_at,
+    status: r.status ?? 'sent',
 
     sender: {
       displayName: r.sender?.displayName ?? r.sender_display_name ?? null,

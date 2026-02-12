@@ -6,12 +6,14 @@ import { useAuth } from '@clerk/nextjs';
 import { ChangeEvent, KeyboardEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type Socket } from 'socket.io-client';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
-import { ArrowLeft, Send, Wifi, WifiOff, FileIcon, Download, FileText } from 'lucide-react';
+import { ArrowLeft, Send, Wifi, WifiOff, FileIcon, Download, FileText, X } from 'lucide-react';
 import { Textarea } from '../ui/textarea';
 import { Button } from '../ui/button';
 import { toast } from 'sonner';
 import ImageUploadButton from './image-upload-button';
 import { ImageModal } from '../ui/image-modal';
+import { ChatMessage } from './chat-message';
+import TypingIndicator from './typing-indicator';
 
 type DirectChatPanelProps = {
   otherUserId: number;
@@ -21,6 +23,18 @@ type DirectChatPanelProps = {
   isOtherUserOnline: boolean;
   onBack: () => void;
 };
+
+function formatLastSeen(dateStr: string | null) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  
+  if (diff < 24 * 60 * 60 * 1000 && date.getDate() === now.getDate()) {
+    return `Last seen today at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  return `Last seen ${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+}
 
 function DirectChatPanel(props: DirectChatPanelProps) {
   const { otherUser, otherUserId, socket, connected, isOtherUserOnline, onBack } = props;
@@ -153,6 +167,19 @@ function DirectChatPanel(props: DirectChatPanelProps) {
     }
   }, [messages]);
 
+  // Read Receipts - Emit Read
+  useEffect(() => {
+    if (!socket || !connected || messages.length === 0) return;
+
+    const unreadMessageIds = messages
+      .filter(m => m.senderUserId === otherUserId && m.status !== 'read')
+      .map(m => m.id);
+
+    if (unreadMessageIds.length > 0) {
+       socket.emit('dm:read', { messageIds: unreadMessageIds, senderUserId: otherUserId });
+    }
+  }, [messages, socket, connected, otherUserId]);
+
   // Socket message handling
   useEffect(() => {
     if (!socket) return;
@@ -178,18 +205,31 @@ function DirectChatPanel(props: DirectChatPanelProps) {
       if (senderId !== otherUserId) return;
 
       if (payload.isTyping) {
-        setTypingLabel('Typing...');
+        setTypingLabel('typing...');
       } else {
         setTypingLabel(null);
       }
     }
+    
+    function handleStatusUpdate(payload: { messageIds: number[], status: 'read' | 'delivered', conversationId: number }) {
+        if (payload.conversationId !== otherUserId) return;
+        
+        setMessages(prev => prev.map(msg => {
+            if (payload.messageIds.includes(msg.id)) {
+                return { ...msg, status: payload.status };
+            }
+            return msg;
+        }));
+    }
 
     socket.on('dm:message', handleMessage);
     socket.on('dm:typing', handleTyping);
+    socket.on('dm:status_update', handleStatusUpdate);
 
     return () => {
       socket.off('dm:message', handleMessage);
       socket.off('dm:typing', handleTyping);
+      socket.off('dm:status_update', handleStatusUpdate);
     };
   }, [socket, otherUserId]);
 
@@ -383,7 +423,7 @@ function DirectChatPanel(props: DirectChatPanelProps) {
   return (
     <>
     <Card 
-      className="flex h-full max-h-[calc(100vh-8rem)] flex-col overflow-hidden border-border/70 bg-card relative"
+      className="flex h-full flex-col overflow-hidden border-border/70 bg-card relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -400,40 +440,41 @@ function DirectChatPanel(props: DirectChatPanelProps) {
         </div>
       )}
 
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border pb-3">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b border-border py-2 px-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 -ml-2" onClick={onBack}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <CardTitle className="text-base text-foreground">{title}</CardTitle>
-            <p className="mt-0.5 text-xs text-muted-foreground">Direct message conversation</p>
+            
+            {/* Avatar */}
+            {otherUser?.avatarUrl ? (
+                <img src={otherUser.avatarUrl} alt={title} className="w-10 h-10 rounded-full object-cover" />
+            ) : (
+                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground font-bold">
+                    {title.charAt(title.startsWith('@') ? 1 : 0).toUpperCase()}
+                </div>
+            )}
+            
+          <div className="flex flex-col">
+            <CardTitle className="text-base font-medium leading-tight">{title}</CardTitle>
+            <p className="text-xs text-muted-foreground">
+               {typingLabel ? (
+                   <span className="text-primary font-semibold animate-pulse">{typingLabel}</span>
+               ) : isOtherUserOnline ? (
+                   'Online'
+               ) : (
+                   formatLastSeen(otherUser?.lastOnlineAt ?? null) || 'Offline'
+               )}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-           <span
-             className={`flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-medium ${
-               isOtherUserOnline ? 'bg-primary/10 text-primary' : 'bg-accent text-accent-foreground'
-             }`}
-           >
-             {isOtherUserOnline ? (
-               <>
-                 <Wifi className="w-3 h-3" />
-                 Online
-               </>
-             ) : (
-               <>
-                 <WifiOff className="w-3 h-3" />
-                 Offline
-               </>
-             )}
-           </span>
-         </div>
       </CardHeader>
 
       <CardContent 
         ref={messagesContainerRef}
-        className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden bg-background/60 p-4 max-h-[calc(100vh-20rem)] md:max-h-[calc(100vh-16rem)] scroll-smooth scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent hover:scrollbar-thumb-primary/40"
+        className="flex-1 space-y-3 overflow-y-auto overflow-x-hidden p-4 sm:px-12 md:px-16 scroll-smooth 
+                   bg-background/50 
+                   scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent"
       >
 
         {isLoading && pageNo === 1 && (
@@ -453,126 +494,45 @@ function DirectChatPanel(props: DirectChatPanelProps) {
         )}
 
         {messages.map((msg, index) => {
-            const isOther = msg.senderUserId === otherUserId;
-            const label = isOther ? title : 'You';
+             const isOwn = msg.senderUserId !== otherUserId;
+             const prevMsg = messages[index - 1]; 
+             const isSameSender = prevMsg && prevMsg.senderUserId === msg.senderUserId;
+             const showTail = !isSameSender;
 
-            const time = new Date(msg.createdAt).toLocaleDateString('en-US', {
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-
-            return (
-              <div 
-                className={`flex gap-2 text-xs min-w-0 ${isOther ? 'justify-start' : 'justify-end'}`} 
-                key={msg.id}
-              >
-                <div className={`min-w-0 max-w-[85%] sm:max-w-md md:max-w-lg ${isOther ? '' : 'order-2'}`}>
-                  <div
-                    className={`mb-1 text-[12px] font-medium ${
-                      isOther ? 'text-muted-foreground' : 'text-muted-foreground text-right'
-                    }`}
-                  >
-                    {label} - {time}
-                  </div>
-
-                  {msg?.body && (
-                    <div
-                      className={`inline-block rounded-lg px-3 py-2 transition-colors duration-150 overflow-hidden max-w-full
-                      ${isOther ? 'bg-accent text-accent-foreground' : 'bg-primary/80 text-primary-foreground'}
-                      `}
-                    >
-                      <p className="break-all text-sm sm:text-base leading-relaxed">
-                        {expandedMessages.has(msg.id) || msg.body.length <= 100
-                          ? msg.body
-                          : `${msg.body.substring(0, 100)}...`}
-                        {msg.body.length > 100 && (
-                          <button
-                            onClick={() => {
-                              const newExpanded = new Set(expandedMessages);
-                              if (expandedMessages.has(msg.id)) {
-                                newExpanded.delete(msg.id);
-                              } else {
-                                newExpanded.add(msg.id);
-                              }
-                              setExpandedMessages(newExpanded);
-                            }}
-                            className="ml-2 text-xs underline opacity-80 hover:opacity-100"
-                          >
-                            {expandedMessages.has(msg.id) ? 'Show less' : 'Show more'}
-                          </button>
-                        )}
-                      </p>
-                    </div>
-                  )}
-
-                  {msg?.imageUrl && (
-                    <div className="mt-2 text-left">
-                      {isImage(msg.imageUrl) ? (
-                        <div 
-                          className="overflow-hidden rounded-lg border border-border cursor-pointer transition-opacity hover:opacity-90 max-w-[200px]"
-                          onClick={() => setSelectedImage(msg.imageUrl)}
-                        >
-                          <img 
-                            src={msg.imageUrl} 
-                            alt="attachment" 
-                            className="max-h-40 w-full object-cover" 
-                          />
-                        </div>
-                      ) : (
-                        <a 
-                          href={msg.imageUrl} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className={`flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:bg-accent/50 ${
-                            isOther ? 'bg-card' : 'bg-primary/5'
-                          }`}
-                        >
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                            {getFileIcon(msg.imageUrl, "h-5 w-5")}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="truncate text-xs font-medium text-foreground">{getFileName(msg.imageUrl)}</p>
-                            <p className="text-[10px] text-muted-foreground">Click to download</p>
-                          </div>
-                          <Download className="h-4 w-4 text-muted-foreground" />
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+             return (
+               <ChatMessage 
+                  key={msg.id} 
+                  message={msg} 
+                  isOwn={isOwn} 
+                  showTail={showTail} 
+                  onImageClick={setSelectedImage}
+                />
+             );
+        })}
 
         {typingLabel && (
-          <div className="flex justify-start gap-2 text-xs">
-            <div className="italic text-muted-foreground">{typingLabel}</div>
-          </div>
+          <TypingIndicator />
         )}
         <div ref={messagesEndRef} />
       </CardContent>
 
-      <div className="p-4 bg-background border-t border-border">
-          {/* Attachment Preview - Compact */}
+      <div className="p-2 sm:p-3 bg-background border-t border-border flex flex-col gap-2">
+          {/* Attachment Preview */}
           {imageUrl && (
-            <div className="mb-2 flex items-center gap-2 rounded-md border border-border bg-muted/50 p-2 w-fit max-w-full">
+            <div className="flex items-center gap-2 rounded-md bg-muted p-2 shadow-sm w-fit max-w-full animate-in slide-in-from-bottom-2">
               {isImage(imageUrl) ? (
-                 <img src={imageUrl} alt="Attachment preview" className="h-10 w-10 rounded object-cover border border-border" />
+                 <img src={imageUrl} alt="preview" className="h-12 w-12 rounded object-cover border" />
               ) : (
-                 <div className="flex h-10 w-10 items-center justify-center rounded bg-primary/10 border border-border">
-                    {getFileIcon(imageUrl, "h-5 w-5")}
-                 </div>
+                 <div className="h-12 w-12 flex items-center justify-center bg-primary/10 rounded">{getFileIcon(imageUrl)}</div>
               )}
-              <div className="flex-1 min-w-0 px-1">
-                 <p className="text-xs font-medium truncate max-w-[150px]">{getFileName(imageUrl)}</p>
+              <div className="flex-1 min-w-0 max-w-[200px] px-2">
+                  <p className="text-sm truncate">{getFileName(imageUrl)}</p>
               </div>
               <button 
-                onClick={handleRemoveAttachment} 
-                className="ml-2 rounded-full p-1 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-                title="Remove attachment"
+                  onClick={handleRemoveAttachment} 
+                  className="p-1 hover:bg-muted-foreground/20 rounded-full text-muted-foreground"
               >
-                  <span className="sr-only">Remove</span>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                  <X className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -580,37 +540,35 @@ function DirectChatPanel(props: DirectChatPanelProps) {
           <div className="flex items-end gap-2">
             <ImageUploadButton onImageUpload={url => setImageUrl(url)} />
             
-            <div className="relative flex-1">
-              <Textarea
-                rows={1}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                placeholder="Type a message..."
-                disabled={!connected || sending}
-                className="min-h-[44px] max-h-32 py-3 px-4 resize-none border-border bg-background text-sm w-full focus-visible:ring-1"
-                style={{ height: 'auto', minHeight: '44px' }}
-                onInput={(e) => {
-                  const target = e.target as HTMLTextAreaElement;
-                  target.style.height = 'auto';
-                  target.style.height = `${Math.min(target.scrollHeight, 128)}px`;
-                }}
-              />
+            <div className="flex-1 relative">
+                <Textarea
+                    value={input}
+                    onChange={handleInputChange}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type a message"
+                    disabled={!connected || sending}
+                    className="min-h-[40px] max-h-[120px] py-2 px-4 resize-none 
+                               bg-muted/50 border-transparent focus:border-input focus:ring-1 focus:ring-ring rounded-xl
+                               shadow-sm scrollbar-hide"
+                    rows={1}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
+                    }}
+                />
             </div>
             
             <Button 
                 size="icon" 
-                className="h-[44px] w-[44px] shrink-0" 
+                className={`h-10 w-10 shrink-0 rounded-full transition-all duration-200 ${
+                    input.trim() || imageUrl ? '' : 'bg-muted text-muted-foreground hover:bg-muted/80'
+                }`}
                 onClick={handleSend} 
                 disabled={sending || !connected || (!input.trim() && !imageUrl)}
             >
-                <Send className="w-5 h-5" />
+                <Send className="w-5 h-5 ml-0.5" />
             </Button>
-          </div>
-          <div className="flex justify-between items-center px-1 mt-1">
-            <span className={`text-[10px] ${input.length > 450 ? 'text-destructive' : 'text-muted-foreground'}`}>
-              {input.length}/500 characters
-            </span>
           </div>
       </div>
     </Card>
