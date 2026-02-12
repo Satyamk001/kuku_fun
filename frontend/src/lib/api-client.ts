@@ -51,4 +51,12 @@ export async function apiPatch<TBody, TResponse>(
   return res.data.data;
 }
 
-// homework -> apiPost
+export async function apiPost<T>(
+  client: AxiosInstance,
+  url: string,
+  body: any,
+  config?: AxiosRequestConfig
+): Promise<T> {
+  const res = await client.post<{ data: T }>(url, body, config);
+  return res.data.data;
+}

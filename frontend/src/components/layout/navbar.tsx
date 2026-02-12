@@ -76,6 +76,11 @@ function Navbar() {
       match: (p?: string | null) => p?.startsWith('chat')
     },
     {
+      href: '/rooms',
+      label: 'Rooms',
+      match: (p?: string | null) => p?.startsWith('rooms')
+    },
+    {
       href: '/profile',
       label: 'Profile',
       match: (p?: string | null) => p?.startsWith('profile')
