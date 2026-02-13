@@ -107,7 +107,7 @@ function Chat() {
   console.log(onlineCount, 'usersCount');
 
   return (
-    <div className="mx-auto max-w-6xl flex w-full flex-col gap-4 py-6 md:flex-row md:gap-6 h-[calc(100vh-6rem)] overflow-hidden md:items-start">
+    <div className="mx-auto max-w-6xl flex w-full flex-col gap-4 py-2 md:py-6 md:flex-row md:gap-6 h-[calc(100vh-8rem)] md:h-[calc(100vh-12rem)] overflow-hidden md:items-start">
       <aside className={cn('w-full shrink-0 md:w-72', activeUserId ? 'hidden md:block' : 'block')}>
         <Card className="h-full border-border/70 bg-card md:sticky md:top-24">
           <CardHeader className="pb-4">
