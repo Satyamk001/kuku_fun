@@ -34,7 +34,6 @@ export function useSocket(): UseSocketResult {
     // get from env
     const baseUrl = process.env.NEXT_PUBLIC_SOCKET_API;
 
-    console.log(`[Socket], ${baseUrl}, ${userId}`);
 
     const socketInstance: Socket = io(baseUrl, {
       auth: { userId }, // backend is going to read the userId
@@ -45,19 +44,16 @@ export function useSocket(): UseSocketResult {
     setSocket(socketInstance);
 
     const handleConnect = () => {
-      console.log(`[Socket], ${socketInstance.id}`);
 
       setConnected(true);
       setError(null);
     };
 
     const handleDisConnect = (reason: any) => {
-      console.log(`[Socket], ${socketInstance.id}, ${reason}`);
       setConnected(false);
     };
 
     const handleConnectError = (err: any) => {
-      console.error(err);
       setError(err.message || 'Failed to connect to chat server');
       setConnected(false);
     };

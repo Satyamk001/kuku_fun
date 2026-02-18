@@ -37,12 +37,10 @@ function Navbar() {
         const data = await apiGet<Notification[]>(apiClient, '/api/notifications?unreadOnly=true');
 
         if (!isMounted) return;
-        console.log(data);
 
         setUnreadCount(data.length);
       } catch (e) {
         if (!isMounted) return;
-        console.log(`Error ocuured`);
       }
     }
 
@@ -158,14 +156,15 @@ function Navbar() {
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
           </SignedIn>
-          {/* On auth pages, Clerk's <SignedOut> may not render — use pathname directly */}
-          {pathname?.startsWith('/sign-up') ? (
+          {/* On auth pages, Clerk's <SignedOut> may not render — use pathname directly.
+              Only show these buttons when the user is NOT signed in to avoid redirect loops. */}
+          {!userId && pathname?.startsWith('/sign-up') ? (
             <Link href="/sign-in">
               <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/90">
                 Sign In
               </Button>
             </Link>
-          ) : pathname?.startsWith('/sign-in') ? (
+          ) : !userId && pathname?.startsWith('/sign-in') ? (
             <Link href="/sign-up">
               <Button size="sm" variant="outline" className="border-border/70 text-foreground hover:bg-muted">
                 Sign Up
