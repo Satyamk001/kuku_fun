@@ -33,10 +33,13 @@ export default function RootLayout({
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <NotificationCountProvider>
             <AppLoader>
-              <div className="flex min-h-screen flex-col bg-background text-foreground">
+              {/* min-h-screen ensures background fills viewport; no flex-col height cap so content pages scroll freely */}
+              <div className="min-h-screen bg-background text-foreground">
                 <Navbar />
-                <main className="flex flex-1 flex-col">
-                  <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-3 md:py-8">{children}</div>
+                <main>
+                  <div className="mx-auto w-full max-w-6xl px-4 py-3 md:py-8">
+                    {children}
+                  </div>
                 </main>
               </div>
               <Toaster />

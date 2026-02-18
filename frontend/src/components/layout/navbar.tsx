@@ -110,6 +110,7 @@ function Navbar() {
       <Link
         key={item.href}
         href={item.href}
+        onClick={() => setMobileMenuOpen(false)}
         className={cn(
             "flex items-center rounded-full px-3 py-2 text-sm font-medium transition-colors shadow-sm",
             item.match(pathname?.slice(1)) 
@@ -148,25 +149,37 @@ function Navbar() {
               </Button>
             </Link>
             <UserButton afterSignOutUrl="/" />
+            {/* Hamburger only shown when signed in — no nav links for signed-out users */}
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen((open: boolean) => !open)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-accent text-muted-foreground transition-colors md:hidden"
+            >
+              {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </SignedIn>
-          <SignedOut>
+          {/* On auth pages, Clerk's <SignedOut> may not render — use pathname directly */}
+          {pathname?.startsWith('/sign-up') ? (
             <Link href="/sign-in">
-              <Button
-                size="sm"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/90"
-              >
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/90">
                 Sign In
               </Button>
             </Link>
-          </SignedOut>
-
-          <button
-            type="button"
-            onClick={() => setMobileMenuOpen((open: boolean) => !open)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-sidebar-border bg-sidebar-accent text-muted-foreground transition-colors md:hidden"
-          >
-            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
-          </button>
+          ) : pathname?.startsWith('/sign-in') ? (
+            <Link href="/sign-up">
+              <Button size="sm" variant="outline" className="border-border/70 text-foreground hover:bg-muted">
+                Sign Up
+              </Button>
+            </Link>
+          ) : (
+            <SignedOut>
+              <Link href="/sign-in">
+                <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm shadow-primary/90">
+                  Sign In
+                </Button>
+              </Link>
+            </SignedOut>
+          )}
         </div>
       </div>
       {mobileMenuOpen && (

@@ -4,7 +4,7 @@ import { ColdStartLoader } from '@/components/ui/cold-start-loader';
 import { ConnectionError } from '@/components/ui/connection-error';
 import { useSocket } from '@/hooks/use-socket';
 import { useAuth } from '@clerk/nextjs';
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export function AppLoader({ children }: { children: React.ReactNode }) {
   const [showLoader, setShowLoader] = useState(false);
@@ -12,10 +12,16 @@ export function AppLoader({ children }: { children: React.ReactNode }) {
   const { connected, error } = useSocket();
   const { isLoaded, userId } = useAuth();
 
-  // Show loader if it's the first time OR if we are logged in but waiting for connection
+  // Once the loader has been dismissed once, never show it again in this session
+  const dismissedRef = useRef(false);
+
+  // True while logged in but socket not yet connected
   const needsConnection = isLoaded && !!userId && !connected;
 
   useEffect(() => {
+    // Don't re-trigger the loader if it was already dismissed once
+    if (dismissedRef.current) return;
+
     if (needsConnection) {
       setShowLoader(true);
     }
@@ -29,23 +35,28 @@ export function AppLoader({ children }: { children: React.ReactNode }) {
       setShowLoader(true);
       sessionStorage.setItem('cold-start-loader-shown', 'true');
     }
-    
+
     // Mark check as complete to reveal content
     setIsStorageChecked(true);
   }, []);
 
+  function handleLoaderComplete() {
+    dismissedRef.current = true;
+    setShowLoader(false);
+  }
+
   return (
     <>
-      {(showLoader || needsConnection) && (
-        <ColdStartLoader 
-          isLoading={needsConnection} 
-          onComplete={() => setShowLoader(false)} 
+      {(showLoader || (!dismissedRef.current && needsConnection)) && (
+        <ColdStartLoader
+          isLoading={needsConnection}
+          onComplete={handleLoaderComplete}
         />
       )}
-      <div 
-        style={{ 
-          opacity: isStorageChecked ? 1 : 0, 
-          transition: 'opacity 0.2s ease-in' 
+      <div
+        style={{
+          opacity: isStorageChecked ? 1 : 0,
+          transition: 'opacity 0.2s ease-in'
         }}
       >
         {children}

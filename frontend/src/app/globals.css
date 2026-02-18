@@ -157,8 +157,13 @@
   }
 }
 
+/* Override Tailwind v4 preflight which sets html/body to height:100%.
+   height:100% caps them to the viewport — content overflows but can't scroll.
+   min-height:100dvh lets them grow with content while still filling the screen. */
+html,
 body {
-  overflow-y: hidden;
+  height: auto;
+  min-height: 100dvh;
   overflow-x: hidden;
 }
 
