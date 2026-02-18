@@ -68,7 +68,7 @@ export default function RoomListPage() {
   };
 
   return (
-    <div className="container mx-auto max-w-5xl py-8 px-4 h-screen flex flex-col">
+    <div className="container mx-auto max-w-5xl py-4 sm:py-8 px-4 flex flex-col">
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Topic Rooms</h1>
@@ -90,7 +90,7 @@ export default function RoomListPage() {
           />
         </div>
         <select 
-          className="h-10 w-[180px] rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="h-10 w-full md:w-[180px] rounded-md border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >

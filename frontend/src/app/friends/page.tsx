@@ -9,7 +9,7 @@ import { Users, UserPlus, Clock } from 'lucide-react';
 
 export default function FriendsPage() {
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
+    <div className="container max-w-4xl mx-auto py-4 sm:py-8 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Friends</h1>
         <p className="text-muted-foreground">Connect with people you know.</p>
@@ -17,17 +17,17 @@ export default function FriendsPage() {
 
       <Tabs defaultValue="friends" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
-          <TabsTrigger value="friends" className="flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            My Friends
+          <TabsTrigger value="friends" className="flex items-center gap-1 sm:gap-2">
+            <Users className="w-4 h-4 shrink-0" />
+            <span className="hidden sm:inline">My Friends</span>
           </TabsTrigger>
-          <TabsTrigger value="requests" className="flex items-center gap-2">
-             <Clock className="w-4 h-4" />
-             Requests
+          <TabsTrigger value="requests" className="flex items-center gap-1 sm:gap-2">
+             <Clock className="w-4 h-4 shrink-0" />
+             <span className="hidden sm:inline">Requests</span>
           </TabsTrigger>
-          <TabsTrigger value="add" className="flex items-center gap-2">
-             <UserPlus className="w-4 h-4" />
-             Find People
+          <TabsTrigger value="add" className="flex items-center gap-1 sm:gap-2">
+             <UserPlus className="w-4 h-4 shrink-0" />
+             <span className="hidden sm:inline">Find People</span>
           </TabsTrigger>
         </TabsList>
         

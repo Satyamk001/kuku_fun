@@ -128,7 +128,7 @@ function ProfilePage() {
     <>
       <SignedOut>User is signed out</SignedOut>
       <SignedIn>
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-8">
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-4 sm:py-8">
           <div>
             <h1 className="flex items-center text-3xl font-bold tracking-tight text-foreground">
               <User className="w-8 h-8 text-primary" />
@@ -139,7 +139,7 @@ function ProfilePage() {
 
           <Card className="border-border/70 bg-card">
             <CardHeader className="pb-4">
-              <div className="flex items-start gap-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
                 <Avatar className="h-20 w-20">
                   {avatarUrlValue && (
                     <AvatarImage src={avatarUrlValue || '/placeholder.xyz'} alt={displayNameValue ?? ''} />

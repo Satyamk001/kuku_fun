@@ -95,7 +95,7 @@ function NotificationsPage() {
   const unreadCount = notifications.filter(n => !n.readAt).length;
 
   return (
-    <div className="mx-auto flex w-full flex-col gap-6 py-8 px-4">
+    <div className="mx-auto flex w-full flex-col gap-6 py-4 sm:py-8 px-4">
       <div>
         <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight text-foreground">
           <Inbox className="h-7 w-7 text-primary" />

@@ -179,7 +179,7 @@ function ThreadsDetailsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-3 py-8 px-20  mx-10">
+      <div className="space-y-3 py-6 px-4 sm:px-6">
         <Button
           variant={'ghost'}
           onClick={() => router.push('/')}

@@ -136,7 +136,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
   if (!room) return null;
 
   return (
-    <div className="flex flex-col h-[calc(100vh-9rem)] bg-background">
+    <div className="flex flex-col h-[calc(100dvh-4rem)] bg-background">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b bg-card">
         <div className="flex items-center gap-4">
@@ -144,7 +144,7 @@ export function RoomChat({ roomId }: RoomChatProps) {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h2 className="font-semibold text-lg">{room.title}</h2>
+            <h2 className="font-semibold text-base sm:text-lg truncate max-w-[55vw]">{room.title}</h2>
             <div className="flex items-center text-xs text-muted-foreground gap-3">
               <span className="flex items-center"><Users className="h-3 w-3 mr-1"/> {room.participantCount || 0} active</span>
               <span className="flex items-center"><Clock className="h-3 w-3 mr-1"/> Expires {new Date(room.expiresAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
